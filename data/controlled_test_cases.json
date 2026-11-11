@@ -1,0 +1,110 @@
+{
+  "description": "Controlled benchmark evaluation records designed to test rule engine conditions, edge cases, and edge failure modes. Clearly designated as controlled test records, separate from training data.",
+  "cases": [
+    {
+      "case_id": "TC_VALID_EDU_01",
+      "test_intent": "Fully valid Educational Degree Certificate with all required fields present and consistent dates.",
+      "declared_category": "Educational Certificate",
+      "expected_verdict": "CONSISTENT",
+      "expected_ml_category": "Educational Certificate",
+      "fields": {
+        "Student Name": "Arjun Sundaram",
+        "Certificate ID": "IITM/2022/BT/4412",
+        "Institution": "Indian Institute of Technology Madras",
+        "Issue Date": "18/07/2022",
+        "Expiry Date": null
+      },
+      "raw_text": "INDIAN INSTITUTE OF TECHNOLOGY MADRAS\nThis is to certify that Arjun Sundaram has qualified for the award of Bachelor of Technology in Mechanical Engineering.\nCertificate ID: IITM/2022/BT/4412\nDate of Issue: 18/07/2022\nGiven under the seal of the Institute."
+    },
+    {
+      "case_id": "TC_INCOMPLETE_ID_02",
+      "test_intent": "Incomplete Identity Document with missing mandatory Date of Birth.",
+      "declared_category": "Identity Document",
+      "expected_verdict": "NEEDS MANUAL REVIEW",
+      "expected_ml_category": "Identity Document",
+      "fields": {
+        "Name": "Vikram Sethi",
+        "Document Number": "9921 4410 8821",
+        "Date of Birth": null,
+        "Issue Date": "10/05/2018",
+        "Expiry Date": null
+      },
+      "raw_text": "GOVERNMENT OF INDIA\nAADHAAR CARD\nName: Vikram Sethi\nDocument Number: 9921 4410 8821\nIssue Date: 10/05/2018\nAddress: Gomti Nagar, Lucknow"
+    },
+    {
+      "case_id": "TC_FUTURE_ISSUE_03",
+      "test_intent": "Conflicting Government Certificate with issue date post-dated into the future.",
+      "declared_category": "Government Certificate",
+      "expected_verdict": "INCONSISTENT",
+      "expected_ml_category": "Government Certificate",
+      "fields": {
+        "Applicant Name": "Ramesh Chandra",
+        "Certificate ID": "UP/DOM/2029/9912",
+        "Issuing Authority": "Tehsildar Sadar Lucknow",
+        "Issue Date": "15/12/2029",
+        "Expiry Date": null
+      },
+      "raw_text": "GOVERNMENT OF UTTAR PRADESH\nREVENUE DEPARTMENT\nDOMICILE CERTIFICATE\nApplicant Name: Ramesh Chandra\nCertificate ID: UP/DOM/2029/9912\nIssuing Authority: Tehsildar Sadar Lucknow\nIssue Date: 15/12/2029"
+    },
+    {
+      "case_id": "TC_EXPIRED_DOC_04",
+      "test_intent": "Expired Identity / Official credential where expiry date is before current date.",
+      "declared_category": "Identity Document",
+      "expected_verdict": "INCONSISTENT",
+      "expected_ml_category": "Identity Document",
+      "fields": {
+        "Name": "Pooja Malhotra",
+        "Document Number": "P8819204",
+        "Date of Birth": "14/06/1990",
+        "Issue Date": "10/01/2012",
+        "Expiry Date": "09/01/2022"
+      },
+      "raw_text": "PASSPORT REPUBLIC OF INDIA\nName: Pooja Malhotra\nDocument Number: P8819204\nDate of Birth: 14/06/1990\nIssue Date: 10/01/2012\nExpiry Date: 09/01/2022"
+    },
+    {
+      "case_id": "TC_INVERTED_DATES_05",
+      "test_intent": "Severe contradiction: Expiry date occurs before Issue date.",
+      "declared_category": "Government Certificate",
+      "expected_verdict": "INCONSISTENT",
+      "expected_ml_category": "Government Certificate",
+      "fields": {
+        "Applicant Name": "Karan Singhal",
+        "Certificate ID": "DL/INC/2021/88",
+        "Issuing Authority": "Revenue Department Delhi",
+        "Issue Date": "20/08/2021",
+        "Expiry Date": "15/01/2020"
+      },
+      "raw_text": "GOVERNMENT OF NCT OF DELHI\nINCOME CERTIFICATE\nApplicant Name: Karan Singhal\nCertificate ID: DL/INC/2021/88\nIssuing Authority: Revenue Department Delhi\nIssue Date: 20/08/2021\nExpiry Date: 15/01/2020"
+    },
+    {
+      "case_id": "TC_DOB_AFTER_ISSUE_06",
+      "test_intent": "Severe contradiction: Date of Birth is after document Issue Date.",
+      "declared_category": "Identity Document",
+      "expected_verdict": "INCONSISTENT",
+      "expected_ml_category": "Identity Document",
+      "fields": {
+        "Name": "Sunil Verma",
+        "Document Number": "DL-1420110091",
+        "Date of Birth": "25/08/2015",
+        "Issue Date": "10/04/2010",
+        "Expiry Date": "09/04/2030"
+      },
+      "raw_text": "TRANSPORT DEPARTMENT\nDRIVING LICENCE\nName: Sunil Verma\nDocument Number: DL-1420110091\nDate of Birth: 25/08/2015\nIssue Date: 10/04/2010\nExpiry Date: 09/04/2030"
+    },
+    {
+      "case_id": "TC_CATEGORY_MISMATCH_07",
+      "test_intent": "User declared Educational Certificate, but uploaded a business receipt from SROIE.",
+      "declared_category": "Educational Certificate",
+      "expected_verdict": "NEEDS MANUAL REVIEW",
+      "expected_ml_category": "Financial / Administrative Record",
+      "fields": {
+        "Student Name": null,
+        "Certificate ID": null,
+        "Institution": null,
+        "Issue Date": "12/03/2018",
+        "Expiry Date": null
+      },
+      "raw_text": "BOOKSTORE & STATIONERY MART SDN BHD\nTAX INVOICE / RECEIPT\nInvoice No: INV-2018-9941\nDate: 12/03/2018\nTOTAL AMOUNT DUE: $46.11\nTHANK YOU FOR YOUR PURCHASE"
+    }
+  ]
+}

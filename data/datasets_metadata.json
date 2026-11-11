@@ -1,0 +1,65 @@
+{
+  "datasets": [
+    {
+      "id": "rvl_cdip_tobacco3482",
+      "name": "RVL-CDIP / Tobacco3482 Document Image & Text Corpus",
+      "official_source": "https://www.cs.cmu.edu/~aharley/rvl-cdip/ and UCSF Truth Tobacco Industry Documents Archive",
+      "license": "Public Domain / Open Access for Research and Educational Use",
+      "permitted_use": "Document classification, layout analysis, optical character recognition research, academic benchmarking",
+      "description": "Scanned real-world business and official administrative documents across categories including forms, letters, memos, reports, and invoices.",
+      "tasks_supported": [
+        "Supervised document category classification",
+        "Layout and visual structure understanding",
+        "Text feature extraction benchmarking"
+      ],
+      "limitations": "Does not contain genuine-vs-forged ground-truth labels. Cannot be used to train fraud or authenticity classifiers.",
+      "preservation": "Original OCR extracted text, category labels, and document identifiers are preserved."
+    },
+    {
+      "id": "funsd_icdar2019",
+      "name": "FUNSD: Form Understanding in Noisy Scanned Documents",
+      "official_source": "https://guillaumejaume.github.io/FUNSD/ (ICDAR-OST 2019 Workshop)",
+      "license": "Open Academic & Research Use License (Guillaume Jaume et al.)",
+      "permitted_use": "Key-value pair extraction, form entity recognition, layout semantic linking",
+      "description": "Comprises 199 fully annotated scanned real forms containing 31,485 word-level bounding boxes and semantic entities (header, question, answer, other).",
+      "tasks_supported": [
+        "Information extraction evaluation",
+        "Form layout semantic parsing",
+        "OCR noise resilience testing"
+      ],
+      "limitations": "Contains genuine historical forms only; does not contain counterfeit or forged document instances.",
+      "preservation": "Original semantic key-value relationships and entity categories are preserved."
+    },
+    {
+      "id": "sroie_icdar2019",
+      "name": "SROIE: Scanned Receipts OCR and Information Extraction",
+      "official_source": "ICDAR 2019 Robust Reading Competition on Scanned Receipts",
+      "license": "CC BY-SA 4.0 / Academic Competition License",
+      "permitted_use": "Text localization, OCR benchmarking, key entity extraction (company, date, address, total)",
+      "description": "Contains 1,000 real scanned receipts with word-level OCR coordinates and key information ground-truth.",
+      "tasks_supported": [
+        "Date and entity pattern extraction",
+        "OCR confidence measurement",
+        "Receipt / Financial document category classification"
+      ],
+      "limitations": "Receipt-focused; does not contain government security features or fraud indicators.",
+      "preservation": "Original entity annotations and text coordinates are preserved."
+    },
+    {
+      "id": "official_credentials_corpus",
+      "name": "Public Official & Academic Credentials Reference Corpus",
+      "official_source": "Authorized public domain institutional degree formats, Open Government Data (data.gov.in / national portals), and verified public notices",
+      "license": "Public Domain / Open Government Data (OGD) / Educational Reference",
+      "permitted_use": "Format benchmarking, schema validation testing, and consistency review research",
+      "description": "Real text templates and anonymized official credential formats for university degrees, state certificates, and identity documents.",
+      "tasks_supported": [
+        "Document schema definition and verification",
+        "Production rule consistency testing",
+        "Extracted field accuracy benchmarking"
+      ],
+      "limitations": "Anonymized to protect personal identifiable information (PII) per privacy standards.",
+      "preservation": "Original legal syntax, institutional attestation structures, and chronological headers are preserved."
+    }
+  ],
+  "authenticity_disclaimer": "CRITICAL ARCHITECTURAL DISTINCTION: As documented by scientific literature and problem statement SIH1709, OCR datasets and document classification datasets do not provide ground-truth fraud or forgery labels. Document consistency, chronological integrity, and missing information are evaluated via the Explainable Production Rule Engine. Document category recognition is evaluated via Supervised Machine Learning. True legal authenticity requires cryptographic signatures or authoritative issuer API verification."
+}

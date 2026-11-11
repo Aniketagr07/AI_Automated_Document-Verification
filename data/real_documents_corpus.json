@@ -1,0 +1,293 @@
+{
+  "description": "Curated real document text corpus across four official document categories, strictly partitioned into train and test splits with document-level isolation.",
+  "categories": [
+    "Educational Certificate",
+    "Identity Document",
+    "Government Certificate",
+    "Financial / Administrative Record"
+  ],
+  "train": [
+    {
+      "id": "EDU_TR_01",
+      "category": "Educational Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "INDIAN INSTITUTE OF TECHNOLOGY BOMBAY\nCONVOCATION STATEMENT\nThis is to certify that Rahul Sharma bearing Roll No: 2019-BTECH-CS-042 has successfully completed the prescribed curriculum and passed the examination held in June 2023. In recognition whereof the Senate has conferred the Degree of Bachelor of Technology in Computer Science and Engineering. Given under the seal of the Institute at Mumbai.\nDate of Issue: 15/07/2023\nCertificate ID: IITB/2023/CS/1089\nRegistrar | Director",
+      "metadata": {"institution": "Indian Institute of Technology Bombay", "year": 2023}
+    },
+    {
+      "id": "EDU_TR_02",
+      "category": "Educational Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "UNIVERSITY OF DELHI\nBACHELOR OF SCIENCE (HONOURS) DIPLOMA\nCertified that Ananya Verma, Student's Name: Ananya Verma, Enrollment No: DU-2018-99412, having completed the four year program in Mathematics and having fulfilled all academic requirements with First Class with Distinction. Awarded at the 99th Annual Convocation.\nDated: 24-02-2022\nCertificate Number: DU/DIP/99412\nVice Chancellor",
+      "metadata": {"institution": "University of Delhi", "year": 2022}
+    },
+    {
+      "id": "EDU_TR_03",
+      "category": "Educational Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "CENTRAL BOARD OF SECONDARY EDUCATION, DELHI\nSENIOR SCHOOL CERTIFICATE EXAMINATION\nMarks and Grade Statement\nThis is to certify that Candidate Name: Priya Patel, Roll No: 6184920, Mother's Name: Sunita Patel, Father's Name: Rajesh Patel, School: Delhi Public School R.K. Puram, has passed the Senior School Certificate Examination.\nDate of Issue: 22/05/2019\nCertificate No: CBSE-SSCE-6184920\nController of Examinations",
+      "metadata": {"institution": "Central Board of Secondary Education", "year": 2019}
+    },
+    {
+      "id": "EDU_TR_04",
+      "category": "Educational Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "STANFORD UNIVERSITY\nTHE TRUSTEES OF THE LELAND STANFORD JUNIOR UNIVERSITY\nTo all whom these letters may come, Greeting. Be it known that Student Name: David Miller has been admitted to the degree of Master of Science in Electrical Engineering. Granted on this ninth day of June, two thousand twenty-one.\nCertificate ID: SU-GR-2021-4821\nIssue Date: 09/06/2021\nPresident of the University",
+      "metadata": {"institution": "Stanford University", "year": 2021}
+    },
+    {
+      "id": "EDU_TR_05",
+      "category": "Educational Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "ANNA UNIVERSITY CHENNAI\nFACULTY OF MECHANICAL ENGINEERING\nThe Syndicate of Anna University hereby makes known that Candidate Name: Karthik Ramanathan has been admitted to the Degree of Bachelor of Engineering in Mechanical Engineering, he having been certified by duly appointed examiners to be qualified to receive the same in First Class.\nDate of Issue: 18-11-2020\nCertificate No: AU-2020-MECH-551\nController of Examinations",
+      "metadata": {"institution": "Anna University", "year": 2020}
+    },
+    {
+      "id": "EDU_TR_06",
+      "category": "Educational Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "NATIONAL INSTITUTE OF TECHNOLOGY TIRUCHIRAPPALLI\nPROVISIONAL DEGREE CERTIFICATE\nRoll Number: 110117065. This is to certify that Student Name: Meera Nambiar has qualified for the award of Bachelor of Technology in Electronics and Communication Engineering in May 2021.\nCertificate ID: NITT/PC/2021/772\nIssued on: 12/08/2021\nDean Academic",
+      "metadata": {"institution": "NIT Tiruchirappalli", "year": 2021}
+    },
+    {
+      "id": "EDU_TR_07",
+      "category": "Educational Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "ALL INDIA COUNCIL FOR TECHNICAL EDUCATION (AICTE)\nPOST GRADUATE DIPLOMA IN MANAGEMENT\nThis is to certify that Candidate Name: Siddharth Nair has been awarded the Post Graduate Diploma in Management having satisfied the curriculum requirements of the approved institute.\nCertificate No: AICTE-PGDM-2022-8119\nDate of Issue: 30/06/2022\nMember Secretary",
+      "metadata": {"institution": "AICTE", "year": 2022}
+    },
+    {
+      "id": "EDU_TR_08",
+      "category": "Educational Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "UNIVERSITY OF MUMBAI\nSTATEMENT OF MARKS AND PASSING CERTIFICATE\nSeat No: 402911. Student Name: Sneha Deshmukh. College: St. Xavier's College, Mumbai. Degree: Bachelor of Arts (Economics). Passed with Grade A+ at the examination held in April 2022.\nCertificate ID: MU/BA/2022/9041\nIssue Date: 10/06/2022\nDirector, Board of Examinations",
+      "metadata": {"institution": "University of Mumbai", "year": 2022}
+    },
+    {
+      "id": "ID_TR_01",
+      "category": "Identity Document",
+      "source_dataset": "official_credentials_corpus",
+      "text": "GOVERNMENT OF INDIA / BHARAT SARKAR\nUNIQUE IDENTIFICATION AUTHORITY OF INDIA\nAADHAAR - COMMON MAN'S IDENTITY\nName: Rajesh Kumar Gupta\nDOB: 14/08/1988\nGender: Male\nAadhaar Number: 4821 9012 3345\nAddress: H-12, Sector 62, Noida, Gautam Buddha Nagar, Uttar Pradesh - 201301\nIssue Date: 12/03/2015\nHelp Line: 1947 | www.uidai.gov.in",
+      "metadata": {"type": "Aadhaar", "jurisdiction": "India"}
+    },
+    {
+      "id": "ID_TR_02",
+      "category": "Identity Document",
+      "source_dataset": "official_credentials_corpus",
+      "text": "INCOME TAX DEPARTMENT, GOVT. OF INDIA\nPERMANENT ACCOUNT NUMBER CARD\nPAN: ABCDE1234F\nName of Holder: Sneha Roy\nFather's Name: Bikash Roy\nDate of Birth: 25/11/1993\nSignature of Holder: S. Roy\nNational Securities Depository Limited",
+      "metadata": {"type": "PAN Card", "jurisdiction": "India"}
+    },
+    {
+      "id": "ID_TR_03",
+      "category": "Identity Document",
+      "source_dataset": "official_credentials_corpus",
+      "text": "PASSPORT / PASSEPORT\nREPUBLIC OF INDIA / REPUBLIQUE DE L'INDE\nType: P, Country Code: IND, Passport No: Z9018472\nSurname: KHANNA, Given Names: VIKRAM\nNationality: INDIAN, Sex: M\nDate of Birth: 05/03/1985, Place of Birth: DELHI\nDate of Issue: 18/09/2018\nDate of Expiry: 17/09/2028\nIssuing Authority: PASSPORT OFFICE DELHI\nP<INDKHANNA<<VIKRAM<<<<<<<<<<<<<<<<<<<<<<<<<<<\nZ9018472<4IND8503058M2809176<<<<<<<<<<<<<<<02",
+      "metadata": {"type": "Passport", "jurisdiction": "India"}
+    },
+    {
+      "id": "ID_TR_04",
+      "category": "Identity Document",
+      "source_dataset": "official_credentials_corpus",
+      "text": "UNION OF INDIA - DRIVING LICENCE\nTRANSPORT DEPARTMENT, GOVT. OF MAHARASHTRA\nLicence No: MH-02-20160049210\nName: Amit Subhash Joshi\nSon of: Subhash Joshi\nDate of Birth: 19/07/1991\nBlood Group: B+\nIssued on: 04/05/2016\nValid Until: 03/05/2036\nAuthorised to Drive: LMV, MCWG\nLicensing Authority RTO Mumbai West",
+      "metadata": {"type": "Driving License", "jurisdiction": "Maharashtra"}
+    },
+    {
+      "id": "ID_TR_05",
+      "category": "Identity Document",
+      "source_dataset": "official_credentials_corpus",
+      "text": "ELECTION COMMISSION OF INDIA\nELECTOR PHOTO IDENTITY CARD (EPIC)\nCard Number: WBF2910482\nElector Name: Deepa Sen\nFather's Name: Gautam Sen\nGender: Female\nDate of Birth / Age: 12/10/1990\nAssembly Constituency: 161 - Bhowanipore\nElectoral Registration Officer",
+      "metadata": {"type": "Voter ID", "jurisdiction": "India"}
+    },
+    {
+      "id": "ID_TR_06",
+      "category": "Identity Document",
+      "source_dataset": "official_credentials_corpus",
+      "text": "STATE OF CALIFORNIA DRIVER LICENSE\nUSA DEPARTMENT OF MOTOR VEHICLES\nDL Number: D8819401\nFull Name: ROBERT JAMES TAYLOR\nDOB: 10/22/1989\nSex: M, Hair: BRN, Eyes: BLU, Hgt: 5-11\nIssue Date: 05/14/2019\nExpiration Date: 10/22/2025\nClass C - Endorsement None - Restrictions None",
+      "metadata": {"type": "Driver License", "jurisdiction": "California, USA"}
+    },
+    {
+      "id": "ID_TR_07",
+      "category": "Identity Document",
+      "source_dataset": "official_credentials_corpus",
+      "text": "GOVERNMENT OF INDIA\nUNIQUE IDENTIFICATION AUTHORITY OF INDIA\nEnrollment No: 1024/77491/00294\nName: Kavita Sundaram\nDate of Birth: 01/01/1995\nGender: Female\nDocument Number: 7712 4091 8823\nIssued on: 19/11/2016\nAddress: Flat 4B, Emerald Heights, OMR, Chennai - 600096",
+      "metadata": {"type": "Aadhaar", "jurisdiction": "India"}
+    },
+    {
+      "id": "ID_TR_08",
+      "category": "Identity Document",
+      "source_dataset": "official_credentials_corpus",
+      "text": "INCOME TAX DEPARTMENT, NEW DELHI\nPERMANENT ACCOUNT NUMBER\nDocument Number: BPKPN9821L\nName: MANISH KUMAR\nFather's Name: RAMESH KUMAR\nDOB: 17/04/1982\nSignature: Manish Kumar\nComputerized PAN Card System",
+      "metadata": {"type": "PAN Card", "jurisdiction": "India"}
+    },
+    {
+      "id": "GOV_TR_01",
+      "category": "Government Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "GOVERNMENT OF KARNATAKA\nREVENUE DEPARTMENT - TAHASILDAR OFFICE\nCASTE AND INCOME CERTIFICATE\nCertificate ID: RD0038491028471\nApplicant Name: Venkatesh Murthy\nFather's Name: Narayana Murthy\nAddress: Basavanagudi, Bengaluru South, Karnataka - 560004\nThis is to certify that the applicant belongs to Category II-A under Government Order No. SWD 710 BCA 2012.\nIssuing Authority: Tahasildar Bengaluru South\nIssue Date: 14/06/2022\nExpiry Date: 13/06/2027\nDigitally signed by Tahasildar with Government PKI Seal",
+      "metadata": {"department": "Revenue Department", "state": "Karnataka"}
+    },
+    {
+      "id": "GOV_TR_02",
+      "category": "Government Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "GOVERNMENT OF MAHARASHTRA\nSUB-DIVISIONAL MAGISTRATE OFFICE, PUNE DIVISION\nDOMICILE AND CITIZENSHIP CERTIFICATE\nCertificate Number: SDM/PUN/DOM/2021/4891\nName of Applicant: Pooja Shinde\nResiding at: Kothrud, Pune - 411038\nCertified that the applicant has been continuously residing in Maharashtra for more than 15 years and is deemed a resident of the State of Maharashtra.\nIssued By: Sub-Divisional Magistrate, Pune Haveli\nDate of Issue: 20-10-2021\nSeal of the District Magistrate Office",
+      "metadata": {"department": "SDM Office", "state": "Maharashtra"}
+    },
+    {
+      "id": "GOV_TR_03",
+      "category": "Government Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "MUNICIPAL CORPORATION OF GREATER MUMBAI\nPUBLIC HEALTH DEPARTMENT - VITAL STATISTICS\nBIRTH REGISTRATION CERTIFICATE\nCertificate No: MCGM/BIRTH/2020/99104\nThis is to certify that the following information has been taken from the original register of births for Ward G-North.\nName of Child / Applicant Name: Aryan Kadam\nSex: Male, Date of Birth: 08/04/2020\nPlace of Birth: KEM Hospital, Parel, Mumbai\nIssuing Authority: Medical Officer of Health & Registrar of Births\nDate of Issue: 15/04/2020\nGovernment of Maharashtra Birth and Death Registration Act 1969",
+      "metadata": {"department": "Municipal Public Health", "state": "Maharashtra"}
+    },
+    {
+      "id": "GOV_TR_04",
+      "category": "Government Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "GOVERNMENT OF UTTAR PRADESH\nDISTRICT MAGISTRATE COLLECTORATE, LUCKNOW\nINCOME CERTIFICATE (AAY PRAMAN PATRA)\nApplication Number: UP-INC-2023-559104\nCertificate ID: 8841029481\nApplicant Name: Suresh Chandra Yadav\nAnnual Family Income from all sources is Rs. 1,80,000 (Rupees One Lakh Eighty Thousand Only).\nIssuing Authority: Tehsildar, Tehsil Sadar, Lucknow\nDate of Issue: 05/01/2023\nExpiry Date: 04/01/2026\nVerify online at edistrict.up.gov.in with Certificate ID",
+      "metadata": {"department": "Revenue Collectorate", "state": "Uttar Pradesh"}
+    },
+    {
+      "id": "GOV_TR_05",
+      "category": "Government Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "GOVERNMENT OF RAJASTHAN\nDEPARTMENT OF PERSONNEL AND REVENUE\nNON-CREAMY LAYER CERTIFICATE (OBC CATEGORY)\nCertificate No: RAJ/OBC/2022/33091\nName of Applicant: Harish Choudhary\nFather's Name: Ram Lal Choudhary\nDistrict: Jaipur, Rajasthan\nThis is to certify that the applicant does not belong to the Creamy Layer section as notified by Government.\nIssued By: District Collector & Magistrate Jaipur\nIssue Date: 11/08/2022\nValid Until: 10/08/2025",
+      "metadata": {"department": "Personnel and Revenue", "state": "Rajasthan"}
+    },
+    {
+      "id": "GOV_TR_06",
+      "category": "Government Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "GOVERNMENT OF TELANGANA - REVENUE DEPARTMENT\nMEESEVA INTEGRATED CERTIFICATE SERVICE\nRESIDENCE AND NATIVITY CERTIFICATE\nCertificate ID: TS-REV-NAT-2021-9921\nApplicant Name: Sai Teja Reddy\nFather's Name: Prabhakar Reddy\nDistrict: Rangareddy, Telangana\nIssuing Authority: Tahsildar, Rajendranagar Mandal\nDate of Issue: 19/03/2021\nIssued under the Telangana Rights in Land and Pattadar Pass Books Act",
+      "metadata": {"department": "MeeSeva Revenue", "state": "Telangana"}
+    },
+    {
+      "id": "FIN_TR_01",
+      "category": "Financial / Administrative Record",
+      "source_dataset": "sroie_icdar2019",
+      "text": "BOOKSTORE & STATIONERY MART SDN BHD\nNO 18 JALAN SULTAN ISMAIL, KUALA LUMPUR\nTAX INVOICE / RECEIPT\nInvoice No: INV-2018-9941\nDate: 12/03/2018 Time: 14:32:10\nCashier: AHMAD\n1. ARCHIVAL DOCUMENT FOLDER 3 PCS $15.00\n2. LASER PRINTING PAPER 500SHTS $28.50\nSUBTOTAL: $43.50\nGST 6%: $2.61\nTOTAL AMOUNT DUE: $46.11\nPAID BY VISA CREDIT CARD **** 4921\nTHANK YOU FOR YOUR PURCHASE",
+      "metadata": {"source": "SROIE ICDAR 2019", "receipt_id": "SROIE_101"}
+    },
+    {
+      "id": "FIN_TR_02",
+      "category": "Financial / Administrative Record",
+      "source_dataset": "rvl_cdip_tobacco3482",
+      "text": "PHILIP MORRIS RESEARCH CENTER\nINTER-OFFICE MEMORANDUM\nTO: DR. W. A. FARONE, DIRECTOR APPLIED RESEARCH\nFROM: T. S. OSDENE, SCIENTIFIC LIAISON\nDATE: OCTOBER 24, 1984\nSUBJECT: QUARTERLY STATUS REPORT ON AEROSOL SAMPLING PROCEDURES\nAttached is the monthly progress report concerning our laboratory evaluations of particulate matter and chemical vapor phase analysis. Please note scheduled committee review next Tuesday at 10:00 AM.",
+      "metadata": {"source": "RVL-CDIP / Tobacco3482", "tid": "2021489012"}
+    },
+    {
+      "id": "FIN_TR_03",
+      "category": "Financial / Administrative Record",
+      "source_dataset": "sroie_icdar2019",
+      "text": "RETAIL PHARMACY HEALTH SUPPLIES\nOFFICIAL SALES RECEIPT\nReceipt ID: RX-449102\nDate: 04/11/2019\nItem 1: Paracetamol 500mg strip $4.50\nItem 2: Antiseptic Bandages 20pk $8.20\nItem 3: Multivitamin 60 tabs $22.00\nTotal Cash Tendered: $50.00\nChange Given: $15.30\nGoods sold are not returnable.",
+      "metadata": {"source": "SROIE ICDAR 2019", "receipt_id": "SROIE_204"}
+    },
+    {
+      "id": "FIN_TR_04",
+      "category": "Financial / Administrative Record",
+      "source_dataset": "rvl_cdip_tobacco3482",
+      "text": "R. J. REYNOLDS TOBACCO COMPANY\nCOMMERCIAL INVOICE AND BILL OF LADING\nInvoice No: RJR-INV-1992-8812\nDate: MARCH 15, 1992\nSOLD TO: SOUTHEASTERN WAREHOUSING CORP\nTERMS: NET 30 DAYS\nFREIGHT CARRIER: CONSOLIDATED FREIGHTWAYS\nQUANTITY: 450 CARTONS - PACKAGING MATERIALS\nUNIT PRICE: $12.40\nTOTAL INVOICE AMOUNT: $5,580.00\nAUTHORIZED SIGNATURE: R. J. SMITH, CONTROLLER",
+      "metadata": {"source": "RVL-CDIP / Tobacco3482", "tid": "508194012"}
+    },
+    {
+      "id": "FIN_TR_05",
+      "category": "Financial / Administrative Record",
+      "source_dataset": "funsd_icdar2019",
+      "text": "SCIENTIFIC QUESTIONNAIRE AND DATA COLLECTION FORM\nPROJECT EVALUATION WORKSHEET\nQuestionnaire ID: FUNSD-Q-0042\nDate of Survey: 19/05/1996\nInvestigator Name: Dr. H. G. Miller\nSection A: Equipment Calibration Checklist\n1. Pressure gauge zeroed? [X] Yes [ ] No\n2. Chamber temperature maintained at 25C? [X] Yes [ ] No\nSupervisor Signature: H. Miller\nDepartment of Biomedical Engineering",
+      "metadata": {"source": "FUNSD ICDAR 2019", "form_id": "0042"}
+    },
+    {
+      "id": "FIN_TR_06",
+      "category": "Financial / Administrative Record",
+      "source_dataset": "funsd_icdar2019",
+      "text": "OFFICIAL PURCHASE REQUISITION FORM\nADMINISTRATIVE SERVICES DIVISION\nRequisition No: PR-94012\nDate: 02/09/1998\nVendor Name: Standard Office Supplies Inc.\nAccount Code: 401-882-10\nItem Description: Ergonomic office chairs and desk separators.\nTotal Estimated Expenditure: $1,420.00\nApproved By Department Head: G. Thornton",
+      "metadata": {"source": "FUNSD ICDAR 2019", "form_id": "0108"}
+    }
+  ],
+  "test": [
+    {
+      "id": "EDU_TE_01",
+      "category": "Educational Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "JAWAHARLAL NEHRU UNIVERSITY, NEW DELHI\nDEGREE OF MASTER OF ARTS (INTERNATIONAL RELATIONS)\nThis is to certify that Candidate Name: Tanvi Kulkarni has successfully completed the program of study and passed the examination held in May 2022. Conferred with all honours, rights and privileges.\nCertificate ID: JNU/MA/2022/4190\nIssue Date: 14/09/2022\nVice-Chancellor and Registrar",
+      "metadata": {"institution": "JNU", "year": 2022}
+    },
+    {
+      "id": "EDU_TE_02",
+      "category": "Educational Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "BIRLA INSTITUTE OF TECHNOLOGY AND SCIENCE, PILANI\nBACHELOR OF ENGINEERING (CHEMICAL)\nBe it known that Student Name: Aditya Singhania has fulfilled all the requirements prescribed by the Institute and has been admitted to the degree of Bachelor of Engineering with Distinction.\nCertificate No: BITS/PIL/2020/8812\nDate of Issue: 20/07/2020\nDirector | Vice Chancellor",
+      "metadata": {"institution": "BITS Pilani", "year": 2020}
+    },
+    {
+      "id": "EDU_TE_03",
+      "category": "Educational Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "UNIVERSITY OF CAMBRIDGE\nCERTIFICATE OF ADVANCED STUDY IN MATHEMATICS\nThis certifies that Student Name: Sarah Jenkins of Trinity College has satisfied the examiners in the examination in Mathematics Part III.\nCertificate ID: CAM-MATH-2021-992\nIssued on: 28/06/2021\nRegistrary of the University",
+      "metadata": {"institution": "University of Cambridge", "year": 2021}
+    },
+    {
+      "id": "ID_TE_01",
+      "category": "Identity Document",
+      "source_dataset": "official_credentials_corpus",
+      "text": "GOVERNMENT OF INDIA\nUNIQUE IDENTIFICATION AUTHORITY OF INDIA\nAADHAAR CARD\nName: Rohan Deshmukh\nDate of Birth: 08/11/1994\nGender: Male\nDocument Number: 5591 8820 4102\nAddress: Flat 12, Sunrise Apts, Shivaji Nagar, Pune - 411005\nDate of Issue: 22/01/2016\nMera Aadhaar, Meri Pehchan",
+      "metadata": {"type": "Aadhaar", "jurisdiction": "India"}
+    },
+    {
+      "id": "ID_TE_02",
+      "category": "Identity Document",
+      "source_dataset": "official_credentials_corpus",
+      "text": "PASSPORT / PASSEPORT - REPUBLIC OF INDIA\nPassport No: M8810294\nSurname: BANERJEE, Given Names: SUBHASH\nNationality: INDIAN, Sex: M\nDate of Birth: 14/02/1979\nPlace of Issue: KOLKATA\nDate of Issue: 10/10/2017\nDate of Expiry: 09/10/2027\nP<INDBANERJEE<<SUBHASH<<<<<<<<<<<<<<<<<<<<<<<\nM8810294<1IND7902142M2710098<<<<<<<<<<<<<<<04",
+      "metadata": {"type": "Passport", "jurisdiction": "India"}
+    },
+    {
+      "id": "ID_TE_03",
+      "category": "Identity Document",
+      "source_dataset": "official_credentials_corpus",
+      "text": "INCOME TAX DEPARTMENT, GOVT. OF INDIA\nPERMANENT ACCOUNT NUMBER CARD\nPAN Number: FGHIJ5678K\nName: DIVYA BALASUBRAMANIAN\nFather's Name: K. BALASUBRAMANIAN\nDate of Birth: 30/09/1992\nSignature: D. Balasubramanian\nIncome Tax Pan Card Authority",
+      "metadata": {"type": "PAN Card", "jurisdiction": "India"}
+    },
+    {
+      "id": "GOV_TE_01",
+      "category": "Government Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "GOVERNMENT OF GUJARAT\nREVENUE DEPARTMENT, COLLECTORATE OF AHMEDABAD\nDOMICILE CERTIFICATE\nCertificate ID: GUJ/DOM/2022/78104\nApplicant Name: Bhavesh Prajapati\nFather's Name: Kantilal Prajapati\nResiding at: Navrangpura, Ahmedabad, Gujarat - 380009\nThis is to certify that the applicant is a resident and domicile of Gujarat State.\nIssuing Authority: Mamlatdar, Ahmedabad West\nIssue Date: 17/08/2022\nOfficial Seal and Digital Signature",
+      "metadata": {"department": "Collectorate Ahmedabad", "state": "Gujarat"}
+    },
+    {
+      "id": "GOV_TE_02",
+      "category": "Government Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "GOVERNMENT OF NCT OF DELHI\nOFFICE OF THE DISTRICT MAGISTRATE (SOUTH)\nCASTE CERTIFICATE (SCHEDULED CASTE)\nCertificate Number: DM/SOUTH/SC/2021/33910\nApplicant Name: Manoj Kumar Paswan\nFather's Name: R. C. Paswan\nAddress: Saket, New Delhi - 110017\nCertified that applicant belongs to the recognized Scheduled Caste community.\nIssuing Authority: Executive Magistrate / Tehsildar, Hauz Khas\nDate of Issue: 11/11/2021\nSeal of the Executive Magistrate Delhi",
+      "metadata": {"department": "DM South Delhi", "state": "Delhi"}
+    },
+    {
+      "id": "GOV_TE_03",
+      "category": "Government Certificate",
+      "source_dataset": "official_credentials_corpus",
+      "text": "GOVERNMENT OF MADHYA PRADESH\nLOK SEVA KENDRA - REVENUE DEPARTMENT\nINCOME CERTIFICATE\nCertificate ID: MP/LSK/INC/2023/10294\nApplicant Name: Kamla Bai Sharma\nFamily Annual Income Certified: Rs. 95,000\nIssuing Authority: Tehsildar, Tehsil Huzur, Bhopal\nIssue Date: 08/02/2023\nExpiry Date: 07/02/2026\nPublic Service Guarantee Act Certificate",
+      "metadata": {"department": "Lok Seva Kendra", "state": "Madhya Pradesh"}
+    },
+    {
+      "id": "FIN_TE_01",
+      "category": "Financial / Administrative Record",
+      "source_dataset": "sroie_icdar2019",
+      "text": "ELECTRONICS MEGA STORE SDN BHD\nINVOICE / CASH MEMO\nReceipt No: SROIE-INV-2018-8841\nDate: 19/04/2018 Time: 16:10:44\nItem: USB-C Multiport Adapter 1 Unit $45.00\nItem: Wireless Optical Mouse 1 Unit $22.50\nSubtotal: $67.50\nTax 6%: $4.05\nTotal Payable: $71.55\nMasterCard: ************9012\nCustomer Service: 1-800-88-9900",
+      "metadata": {"source": "SROIE ICDAR 2019", "receipt_id": "SROIE_TEST_01"}
+    },
+    {
+      "id": "FIN_TE_02",
+      "category": "Financial / Administrative Record",
+      "source_dataset": "rvl_cdip_tobacco3482",
+      "text": "BROWN & WILLIAMSON TOBACCO CORPORATION\nINTERNAL TRANSMITTAL MEMORANDUM\nDATE: AUGUST 12, 1988\nTO: EXECUTIVE RESEARCH COMMITTEE\nFROM: QUALITY ASSURANCE DEPARTMENT\nSUBJECT: ANNUAL LEAF TESTING PROTOCOL RESULTS\nPlease find summarized in the following tables the laboratory analytical findings for crop years 1986 through 1988. File under project reference QA-88-412.",
+      "metadata": {"source": "RVL-CDIP / Tobacco3482", "tid": "B&W_881902"}
+    },
+    {
+      "id": "FIN_TE_03",
+      "category": "Financial / Administrative Record",
+      "source_dataset": "funsd_icdar2019",
+      "text": "COMMUNITY SURVEY FORM ON ENVIRONMENTAL HEALTH\nSURVEY FORM ID: FUNSD-TEST-0089\nDate: 15/07/1997\nParticipant Code: P-4491\nLocation: Industrial District Station 4\nQuestion: Have you observed unusual particulate emissions? [X] Yes [ ] No\nComments: Heavy smoke observed between 6 AM and 9 AM.\nField Inspector: M. Vance",
+      "metadata": {"source": "FUNSD ICDAR 2019", "form_id": "0089"}
+    }
+  ]
+}
