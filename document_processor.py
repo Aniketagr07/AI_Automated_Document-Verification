@@ -252,13 +252,29 @@ def process_file_bytes(
     full_text = "\n\n--- Page Break ---\n\n".join(full_text_parts).strip()
     avg_confidence = round(sum(confidences) / len(confidences), 2) if confidences else 0.0
 
+    # 3. Digital Document Forensics & ELA Tamper Analysis
+    from forensics_analyzer import compute_error_level_analysis, inspect_document_metadata
+    forensics = inspect_document_metadata(file_bytes, filename)
+    ela_preview = None
+    ela_risk = 0.0
+    ela_verdict = "UNIFORM ERROR LEVELS"
+    if pages_data and "preview_image" in pages_data[0]:
+        try:
+            ela_preview, ela_risk, ela_verdict = compute_error_level_analysis(pages_data[0]["preview_image"])
+        except Exception as e:
+            logger.debug(f"ELA analysis skipped: {e}")
+
     return {
         "filename": filename,
         "page_count": len(pages_data),
         "full_text": full_text,
         "average_ocr_confidence": avg_confidence,
         "pages": pages_data,
-        "is_ocr_enabled": bool(TESSERACT_PATH)
+        "is_ocr_enabled": bool(TESSERACT_PATH),
+        "forensics": forensics,
+        "ela_preview_image": ela_preview,
+        "ela_risk_score": ela_risk,
+        "ela_verdict": ela_verdict
     }
 
 

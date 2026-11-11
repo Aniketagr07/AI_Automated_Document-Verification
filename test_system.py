@@ -464,5 +464,77 @@ class TestMachineLearningAndEvaluation(unittest.TestCase):
         self.assertGreaterEqual(proposed["F1 Score"], 0.80)
 
 
+class TestSIHEnhancedForensicsAndChecksums(unittest.TestCase):
+    """SIH1709 Winning Upgrades: Verhoeff Checksum, PAN Coherence, ELA, and Uncertainty Matrix."""
+
+    def test_verhoeff_aadhaar_validation(self):
+        from verhoeff import validate_verhoeff, generate_verhoeff_check_digit
+        # Valid test Aadhaar numbers
+        self.assertTrue(validate_verhoeff("2093 4519 8273"))
+        self.assertTrue(validate_verhoeff("9921 4410 8823"))
+        # Invalid / fake Aadhaar numbers
+        self.assertFalse(validate_verhoeff("1234 5678 9012"))
+        self.assertFalse(validate_verhoeff("9999 8888 7777"))
+
+    def test_pan_structure_and_surname_matching(self):
+        from verhoeff import validate_pan_structure
+        # Valid: 4th char P (Person), 5th char S matches surname 'Sharma'
+        ok, msg = validate_pan_structure("ABCPS1234D", "Vikram Sharma")
+        self.assertTrue(ok)
+        # Invalid: 5th char S does NOT match surname 'Gupta'
+        fail, msg = validate_pan_structure("ABCPS1234D", "Vikram Gupta")
+        self.assertFalse(fail)
+        self.assertIn("does not match first letter of surname", msg)
+
+    def test_rule_r013_aadhaar_checksum_trigger(self):
+        fields = {
+            "Name": {"value": "Manish Tiwari", "confidence": 95.0},
+            "Document Number": {"value": "1234 5678 9012", "confidence": 95.0},
+            "Date of Birth": {"value": "09/12/1994", "confidence": 95.0}
+        }
+        verdict, rules = run_rule_engine(fields, "Identity Document", "AADHAAR CARD")
+        self.assertEqual(verdict, "INCONSISTENT")
+        rule_ids = [r["Rule ID"] for r in rules]
+        self.assertIn("R013", rule_ids)
+
+    def test_dual_axis_uncertainty_matrix_quadrants(self):
+        from rule_engine import compute_dual_axis_uncertainty_matrix
+
+        # Quadrant I: High OCR + Clean Rules = Verified Consistent
+        q1 = compute_dual_axis_uncertainty_matrix(
+            ocr_confidence=95.0,
+            raw_text="Full pristine document text confer degree",
+            extracted_fields={"Name": "Test", "ID": "123"},
+            rule_results=[{"Severity": "PASS"}]
+        )
+        self.assertEqual(q1["quadrant_id"], "I")
+
+        # Quadrant II: Low OCR + Clean Rules = Extraction Noise (Scan Blur)
+        q2 = compute_dual_axis_uncertainty_matrix(
+            ocr_confidence=40.0,
+            raw_text="blurry text",
+            extracted_fields={"Name": "Test"},
+            rule_results=[{"Severity": "PASS"}]
+        )
+        self.assertEqual(q2["quadrant_id"], "II")
+
+        # Quadrant IV: High OCR + Contradiction = Genuine Fraud
+        q4 = compute_dual_axis_uncertainty_matrix(
+            ocr_confidence=95.0,
+            raw_text="Pristine high resolution document scan",
+            extracted_fields={"Name": "Test", "ID": "123"},
+            rule_results=[{"Severity": "INCONSISTENT"}]
+        )
+        self.assertEqual(q4["quadrant_id"], "IV")
+
+    def test_controlled_benchmark_runner_execution(self):
+        from benchmark_runner import run_benchmark_suite
+        bench_path = Path(__file__).parent / "data" / "controlled_test_cases.json"
+        res = run_benchmark_suite(bench_path)
+        self.assertGreaterEqual(res["total_cases"], 20)
+        self.assertEqual(res["proposed_far"], 0.0)  # FAR must be 0.0%
+        self.assertGreaterEqual(res["proposed_accuracy"], 95.0)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -10,7 +10,9 @@ Implements an explainable forward-chaining verification system:
 
 from datetime import date
 from typing import Dict, List, Tuple, Any, Optional
+import re
 from document_schema import get_schema, parse_date_robust, validate_document_schema
+from verhoeff import validate_verhoeff, validate_pan_structure
 
 
 def parse_date(value: Any) -> Optional[date]:
@@ -258,6 +260,92 @@ def run_rule_engine(
             })
 
     # -----------------------------------------------------------------------
+    # RULE R013: Aadhaar Verhoeff Dihedral (D5) Checksum Validation
+    # -----------------------------------------------------------------------
+    id_val_raw = get_val("Document Number") or get_val("Certificate ID") or ""
+    all_text_to_check = f"{id_val_raw} {raw_text}"
+    digits_only = re.sub(r"\D", "", id_val_raw)
+
+    is_aadhaar = (
+        category_name == "Identity Document" or
+        "aadhaar" in raw_text.lower() or
+        "uidai" in raw_text.lower() or
+        "unique identification" in raw_text.lower()
+    )
+
+    if is_aadhaar and len(digits_only) == 12:
+        if not validate_verhoeff(digits_only):
+            triggered_rules.append({
+                "Rule ID": "R013",
+                "Rule Name": "Aadhaar Verhoeff Checksum Failure",
+                "Condition": f"Aadhaar UID '{digits_only}' fails mathematical Verhoeff check digit validation",
+                "Severity": "INCONSISTENT",
+                "Explanation": (
+                    f"The 12-digit Aadhaar number '{digits_only}' fails the official UIDAI Verhoeff dihedral checksum. "
+                    "This indicates an algorithmically fabricated, modified, or mistyped identity number."
+                ),
+                "Evidence": f"Extracted UID: '{id_val_raw}'. Checksum validation: FAILED.",
+                "Recommended Action": "Reject document as mathematically inconsistent. Request authentic Aadhaar card."
+            })
+
+    # -----------------------------------------------------------------------
+    # RULE R014: Permanent Account Number (PAN) Structural & Surname Coherence
+    # -----------------------------------------------------------------------
+    clean_id_no_space = re.sub(r"\s+", "", id_val_raw).upper()
+    pan_candidate = None
+    if re.fullmatch(r"^[A-Z]{5}[0-9]{4}[A-Z]$", clean_id_no_space):
+        pan_candidate = clean_id_no_space
+    else:
+        pan_match = re.search(r"\b[A-Z]{5}[0-9]{4}[A-Z]\b", raw_text)
+        if pan_match:
+            pan_candidate = pan_match.group(0)
+
+    if pan_candidate:
+        holder_name = get_val("Name") or get_val("Applicant Name") or get_val("Student Name") or ""
+        is_pan_valid, pan_msg = validate_pan_structure(pan_candidate, holder_name)
+        if not is_pan_valid:
+            triggered_rules.append({
+                "Rule ID": "R014",
+                "Rule Name": "PAN Holder Identity Coherence Inconsistency",
+                "Condition": f"PAN '{pan_candidate}' failed validation: {pan_msg}",
+                "Severity": "INCONSISTENT",
+                "Explanation": (
+                    f"PAN validation anomaly: {pan_msg}. In official PAN formatting, the 4th letter designates entity "
+                    "type (P for Person), and the 5th letter must match the cardholder's surname initial."
+                ),
+                "Evidence": f"PAN: '{pan_candidate}', Cardholder: '{holder_name}'. {pan_msg}",
+                "Recommended Action": "Demand original PAN card verification; cross-reference Income Tax department records."
+            })
+
+    # -----------------------------------------------------------------------
+    # RULE R015: Academic Horizon & Course Duration Consistency
+    # -----------------------------------------------------------------------
+    if category_name == "Educational Certificate" and issue_parsed:
+        # Check for enrollment/matriculation year inside certificate ID or text
+        # e.g., IITB/2021/CS/1089 or Roll No: 2020-BTECH-042
+        cert_id_val = get_val("Certificate ID") or ""
+        year_matches = re.findall(r"\b(20[0-2][0-9]|19[8-9][0-9])\b", f"{cert_id_val} {raw_text}")
+        if year_matches:
+            found_years = [int(y) for y in year_matches]
+            earliest_year = min(found_years)
+            issue_year = issue_parsed.year
+            # If enrollment year is indicated and is equal to or after issue year
+            if "bachelor" in raw_text.lower() or "b.tech" in raw_text.lower() or "degree" in raw_text.lower():
+                if issue_year < earliest_year:
+                    triggered_rules.append({
+                        "Rule ID": "R015",
+                        "Rule Name": "Academic Horizon Inconsistency: Award Precedes Enrollment",
+                        "Condition": f"Degree issue year ({issue_year}) < Enrollment/Batch Year ({earliest_year})",
+                        "Severity": "INCONSISTENT",
+                        "Explanation": (
+                            f"Degree confers in year {issue_year}, which precedes the recorded academic batch or "
+                            f"enrollment year {earliest_year}. An official degree cannot be completed before admission."
+                        ),
+                        "Evidence": f"Issue Date Year: {issue_year}, Batch Year detected: {earliest_year}",
+                        "Recommended Action": "Flag degree record for verification with registrar's convocation rolls."
+                    })
+
+    # -----------------------------------------------------------------------
     # Compute Final System Verdict
     # -----------------------------------------------------------------------
     has_inconsistent = any(r["Severity"] == "INCONSISTENT" for r in triggered_rules)
@@ -280,3 +368,83 @@ def run_rule_engine(
         })
 
     return verdict, triggered_rules
+
+
+def compute_dual_axis_uncertainty_matrix(
+    ocr_confidence: float,
+    raw_text: str,
+    extracted_fields: Dict[str, Any],
+    rule_results: List[Dict[str, Any]]
+) -> Dict[str, Any]:
+    """
+    Computes coordinates for the Dual-Axis Uncertainty vs Inconsistency Matrix.
+    Distinguishes extraction noise (scan blur/lighting) from genuine fraud/contradictions.
+    Returns:
+        {
+            "extraction_quality_score": float (0-100),
+            "logical_consistency_score": float (0-100),
+            "quadrant_id": "I" | "II" | "III" | "IV",
+            "quadrant_name": str,
+            "quadrant_description": str,
+            "action_advice": str
+        }
+    """
+    # 1. Calculate Extraction Quality Score (X-Axis: 0 to 100)
+    ocr_factor = min(100.0, max(0.0, float(ocr_confidence)))
+    text_len = len(raw_text.strip()) if raw_text else 0
+    text_factor = min(100.0, (text_len / 250.0) * 100.0)
+
+    # Check non-empty extracted fields
+    if extracted_fields:
+        extracted_count = sum(
+            1 for v in extracted_fields.values()
+            if (v.get("value") if isinstance(v, dict) else v) is not None
+        )
+        field_factor = (extracted_count / len(extracted_fields)) * 100.0
+    else:
+        field_factor = 50.0
+
+    extraction_quality = round((ocr_factor * 0.50) + (text_factor * 0.25) + (field_factor * 0.25), 1)
+
+    # 2. Calculate Logical Consistency Score (Y-Axis: 0 to 100)
+    consistency_score = 100.0
+    for r in rule_results:
+        sev = r.get("Severity", "")
+        if sev == "INCONSISTENT":
+            consistency_score -= 50.0
+        elif sev == "NEEDS MANUAL REVIEW":
+            consistency_score -= 15.0
+
+    logical_consistency = round(max(0.0, min(100.0, consistency_score)), 1)
+
+    # 3. Determine Quadrant
+    if extraction_quality >= 60.0 and logical_consistency >= 70.0:
+        quadrant_id = "I"
+        quadrant_name = "QUADRANT I: VERIFIED CONSISTENT"
+        desc = "High extraction confidence and consistent logical/chronological relationships."
+        advice = "Auto-finalized. Safe for downstream administrative processing."
+    elif extraction_quality < 60.0 and logical_consistency >= 70.0:
+        quadrant_id = "II"
+        quadrant_name = "QUADRANT II: EXTRACTION NOISE (Scan Ambiguity)"
+        desc = "Logical constraints pass, but OCR legibility or document clarity is degraded."
+        advice = "Request clean high-resolution scan or prompt officer for visual field verification."
+    elif extraction_quality < 60.0 and logical_consistency < 70.0:
+        quadrant_id = "III"
+        quadrant_name = "QUADRANT III: UNABLE TO VERIFY"
+        desc = "Severe document degradation combined with missing or unresolvable fields."
+        advice = "Reject automated parsing; demand physical original credential submission."
+    else:
+        quadrant_id = "IV"
+        quadrant_name = "QUADRANT IV: GENUINE CONTRADICTION (Suspected Fraud)"
+        desc = "High extraction clarity, but explicit logical, temporal, or checksum violations detected."
+        advice = "Escalate to administrative investigation; flag irreconcilable data conflict."
+
+    return {
+        "extraction_quality_score": extraction_quality,
+        "logical_consistency_score": logical_consistency,
+        "quadrant_id": quadrant_id,
+        "quadrant_name": quadrant_name,
+        "quadrant_description": desc,
+        "action_advice": advice
+    }
+

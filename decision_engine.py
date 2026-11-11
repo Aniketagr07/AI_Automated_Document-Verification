@@ -32,6 +32,7 @@ from constants import (
     STANDARD_STATUSES,
     AUTHENTICITY_DISCLAIMER
 )
+from rule_engine import compute_dual_axis_uncertainty_matrix
 
 
 @dataclass
@@ -48,6 +49,10 @@ class DecisionOutcome:
     is_category_misaligned: bool = False
     recommended_actions: List[str] = field(default_factory=list)
     authenticity_disclaimer: str = AUTHENTICITY_DISCLAIMER
+    extraction_quality_score: float = 85.0
+    logical_consistency_score: float = 100.0
+    uncertainty_quadrant: str = "QUADRANT I: VERIFIED CONSISTENT"
+    uncertainty_advice: str = ""
 
 
 def evaluate_verification_decision(
@@ -68,6 +73,20 @@ def evaluate_verification_decision(
     detailed_reasons: List[str] = []
     recommended_actions: List[str] = []
 
+    matrix = compute_dual_axis_uncertainty_matrix(
+        ocr_confidence=ocr_confidence,
+        raw_text=raw_text,
+        extracted_fields=extracted_fields,
+        rule_results=rule_results
+    )
+
+    def _with_matrix(outcome: DecisionOutcome) -> DecisionOutcome:
+        outcome.extraction_quality_score = matrix["extraction_quality_score"]
+        outcome.logical_consistency_score = matrix["logical_consistency_score"]
+        outcome.uncertainty_quadrant = matrix["quadrant_name"]
+        outcome.uncertainty_advice = matrix["action_advice"]
+        return outcome
+
     # -----------------------------------------------------------------------
     # 1. Check if an Authorized Human Admin Decision Already Overrides
     # -----------------------------------------------------------------------
@@ -77,7 +96,7 @@ def evaluate_verification_decision(
         notes = admin_review.get("review_notes", "No specific reviewer notes recorded.")
 
         if decision == "APPROVED":
-            return DecisionOutcome(
+            return _with_matrix(DecisionOutcome(
                 final_status=STATUS_CONSISTENCY_PASSED,
                 simple_explanation=(
                     f"Document consistency was manually reviewed and APPROVED by {reviewer}. "
@@ -88,9 +107,9 @@ def evaluate_verification_decision(
                 escalation_reason=None,
                 recommended_actions=["Proceed with standard application processing."],
                 authenticity_disclaimer=AUTHENTICITY_DISCLAIMER
-            )
+            ))
         elif decision == "REJECTED":
-            return DecisionOutcome(
+            return _with_matrix(DecisionOutcome(
                 final_status=STATUS_INCONSISTENCIES,
                 simple_explanation=(
                     f"Document was REJECTED during manual review by {reviewer}. "
@@ -102,9 +121,9 @@ def evaluate_verification_decision(
                 has_contradictions=True,
                 recommended_actions=["Notify applicant of documented inconsistencies and request resubmission."],
                 authenticity_disclaimer=AUTHENTICITY_DISCLAIMER
-            )
+            ))
         elif decision == "UNRESOLVED":
-            return DecisionOutcome(
+            return _with_matrix(DecisionOutcome(
                 final_status=STATUS_UNABLE_TO_VERIFY,
                 simple_explanation=(
                     f"Document marked UNRESOLVED by {reviewer}. "
@@ -115,9 +134,9 @@ def evaluate_verification_decision(
                 escalation_reason=f"Unresolved ambiguity flagged by {reviewer}",
                 recommended_actions=["Request physical original credential or issuing authority confirmation."],
                 authenticity_disclaimer=AUTHENTICITY_DISCLAIMER
-            )
+            ))
         elif decision == "INFO_REQUESTED":
-            return DecisionOutcome(
+            return _with_matrix(DecisionOutcome(
                 final_status=STATUS_NEEDS_REVIEW,
                 simple_explanation=(
                     f"Additional information requested by {reviewer}. "
@@ -128,14 +147,14 @@ def evaluate_verification_decision(
                 escalation_reason=f"Pending additional information from applicant.",
                 recommended_actions=["Applicant must supply clearer scan or additional identity proof."],
                 authenticity_disclaimer=AUTHENTICITY_DISCLAIMER
-            )
+            ))
 
     # -----------------------------------------------------------------------
     # 2. Automated Evaluation: Check for Unprocessable / Unsupported Document
     # -----------------------------------------------------------------------
     text_clean = raw_text.strip() if raw_text else ""
     if len(text_clean) < 30:
-        return DecisionOutcome(
+        return _with_matrix(DecisionOutcome(
             final_status=STATUS_UNABLE_TO_VERIFY,
             simple_explanation=(
                 "The system was unable to read sufficient text from this document. "
@@ -150,7 +169,7 @@ def evaluate_verification_decision(
                 "Ensure the document is right-side up, well-lit, and uncropped."
             ],
             authenticity_disclaimer=AUTHENTICITY_DISCLAIMER
-        )
+        ))
 
     # -----------------------------------------------------------------------
     # 3. Check for Fatal Contradictions (Production Rules with INCONSISTENT severity)
@@ -162,7 +181,7 @@ def evaluate_verification_decision(
         rule_name = inconsistent_rules[0].get("Rule Name") or inconsistent_rules[0].get("Rule ID", "Contradiction")
         actions = [r.get("Recommended Action") for r in inconsistent_rules if r.get("Recommended Action")]
 
-        return DecisionOutcome(
+        return _with_matrix(DecisionOutcome(
             final_status=STATUS_INCONSISTENCIES,
             simple_explanation=f"Contradictory or invalid information detected: {primary_msg}",
             detailed_reasons=reasons,
@@ -171,7 +190,7 @@ def evaluate_verification_decision(
             has_contradictions=True,
             recommended_actions=actions or ["Flag document for review and verify issuing authority records."],
             authenticity_disclaimer=AUTHENTICITY_DISCLAIMER
-        )
+        ))
 
     # -----------------------------------------------------------------------
     # 4. Check for Missing Mandatory Fields (Schema MISSING)
@@ -181,7 +200,7 @@ def evaluate_verification_decision(
     ]
     if missing_fields:
         missing_str = ", ".join(missing_fields)
-        return DecisionOutcome(
+        return _with_matrix(DecisionOutcome(
             final_status=STATUS_NEEDS_REVIEW,
             simple_explanation=(
                 f"Required information is missing from the document: {missing_str}. "
@@ -196,13 +215,13 @@ def evaluate_verification_decision(
                 "Reviewer should manually enter or confirm the missing values."
             ],
             authenticity_disclaimer=AUTHENTICITY_DISCLAIMER
-        )
+        ))
 
     # -----------------------------------------------------------------------
     # 5. Check for Degraded Scan Quality / Low OCR Confidence
     # -----------------------------------------------------------------------
     if ocr_confidence < 60.0:
-        return DecisionOutcome(
+        return _with_matrix(DecisionOutcome(
             final_status=STATUS_NEEDS_REVIEW,
             simple_explanation=(
                 f"Document text was recognized with low confidence ({ocr_confidence:.1f}%). "
@@ -217,7 +236,7 @@ def evaluate_verification_decision(
                 "Verify high-risk characters (0 vs O, 8 vs B, 1 vs I)."
             ],
             authenticity_disclaimer=AUTHENTICITY_DISCLAIMER
-        )
+        ))
 
     # -----------------------------------------------------------------------
     # 6. Check for Category Misalignment (ML vs User Declaration)
@@ -232,7 +251,7 @@ def evaluate_verification_decision(
         and predicted_cat != declared_category
         and ml_confidence >= 65.0
     ):
-        return DecisionOutcome(
+        return _with_matrix(DecisionOutcome(
             final_status=STATUS_NEEDS_REVIEW,
             simple_explanation=(
                 f"The document layout matches '{predicted_cat}' rather than the declared category '{declared_category}'. "
@@ -250,7 +269,7 @@ def evaluate_verification_decision(
                 "Re-file document under the appropriate category."
             ],
             authenticity_disclaimer=AUTHENTICITY_DISCLAIMER
-        )
+        ))
 
     # -----------------------------------------------------------------------
     # 7. Check for Non-Fatal Review Warnings (R002, R008, R009)
@@ -258,7 +277,7 @@ def evaluate_verification_decision(
     review_rules = [r for r in rule_results if r.get("Severity") == "NEEDS MANUAL REVIEW"]
     if review_rules:
         reasons = [f"[{r.get('Rule ID')}] {r.get('Explanation')}" for r in review_rules]
-        return DecisionOutcome(
+        return _with_matrix(DecisionOutcome(
             final_status=STATUS_NEEDS_REVIEW,
             simple_explanation=(
                 "The document passed primary checks but contains formatting variations or unconfirmed items. "
@@ -269,12 +288,12 @@ def evaluate_verification_decision(
             escalation_reason=f"Unresolved formatting or syntax flags ({len(review_rules)} items).",
             recommended_actions=["Officer should review flagged fields and approve if acceptable."],
             authenticity_disclaimer=AUTHENTICITY_DISCLAIMER
-        )
+        ))
 
     # -----------------------------------------------------------------------
     # 8. All Checks Satisfied -> Clean Automatic Approval!
     # -----------------------------------------------------------------------
-    return DecisionOutcome(
+    return _with_matrix(DecisionOutcome(
         final_status=STATUS_CONSISTENCY_PASSED,
         simple_explanation=(
             "All automated consistency checks passed successfully. "
@@ -292,4 +311,4 @@ def evaluate_verification_decision(
             "Document is internally consistent. Ready for downstream application processing."
         ],
         authenticity_disclaimer=AUTHENTICITY_DISCLAIMER
-    )
+    ))

@@ -1,72 +1,162 @@
 {
-  "description": "Controlled benchmark evaluation records designed to test rule engine conditions, edge cases, and edge failure modes. Clearly designated as controlled test records, separate from training data.",
+  "description": "Comprehensive SIH1709 Controlled Evaluation Suite covering Valid, Incomplete, Contradictory, and Edge-Case official document scenarios.",
   "cases": [
     {
-      "case_id": "TC_VALID_EDU_01",
-      "test_intent": "Fully valid Educational Degree Certificate with all required fields present and consistent dates.",
+      "case_id": "TC_01_VALID_EDU_DEGREE",
+      "test_intent": "Golden Standard: Fully valid B.Tech Degree Certificate from IIT Bombay with complete fields and consistent dates.",
       "declared_category": "Educational Certificate",
-      "expected_verdict": "CONSISTENT",
-      "expected_ml_category": "Educational Certificate",
+      "expected_verdict": "CONSISTENCY CHECKS PASSED",
+      "ocr_confidence": 98.5,
       "fields": {
-        "Student Name": "Arjun Sundaram",
-        "Certificate ID": "IITM/2022/BT/4412",
-        "Institution": "Indian Institute of Technology Madras",
-        "Issue Date": "18/07/2022",
+        "Student Name": "Rahul Sharma",
+        "Certificate ID": "IITB/2023/CS/1089",
+        "Institution": "Indian Institute of Technology Bombay",
+        "Issue Date": "15/07/2023",
         "Expiry Date": null
       },
-      "raw_text": "INDIAN INSTITUTE OF TECHNOLOGY MADRAS\nThis is to certify that Arjun Sundaram has qualified for the award of Bachelor of Technology in Mechanical Engineering.\nCertificate ID: IITM/2022/BT/4412\nDate of Issue: 18/07/2022\nGiven under the seal of the Institute."
+      "raw_text": "INDIAN INSTITUTE OF TECHNOLOGY BOMBAY\nThis is to certify that Rahul Sharma has satisfied all requirements for the degree of Bachelor of Technology in Computer Science and Engineering.\nCertificate ID: IITB/2023/CS/1089\nDate of Issue: 15/07/2023\nGiven under the seal of the Institute."
     },
     {
-      "case_id": "TC_INCOMPLETE_ID_02",
+      "case_id": "TC_02_VALID_AADHAAR_VERHOEFF",
+      "test_intent": "Valid Aadhaar Card with mathematically sound Verhoeff checksum digit.",
+      "declared_category": "Identity Document",
+      "expected_verdict": "CONSISTENCY CHECKS PASSED",
+      "ocr_confidence": 96.0,
+      "fields": {
+        "Name": "Ananya Verma",
+        "Document Number": "2093 4519 8273",
+        "Date of Birth": "14/05/1998",
+        "Issue Date": "20/08/2016",
+        "Expiry Date": null
+      },
+      "raw_text": "GOVERNMENT OF INDIA\nUNIQUE IDENTIFICATION AUTHORITY OF INDIA\nName: Ananya Verma\nDOB: 14/05/1998\nGender: Female\nAadhaar Number: 2093 4519 8273\nIssue Date: 20/08/2016"
+    },
+    {
+      "case_id": "TC_03_VALID_PAN_CARD",
+      "test_intent": "Valid Income Tax PAN Card with matching 4th entity code (P for person) and 5th surname letter (S for Sharma).",
+      "declared_category": "Identity Document",
+      "expected_verdict": "CONSISTENCY CHECKS PASSED",
+      "ocr_confidence": 97.0,
+      "fields": {
+        "Name": "Vikram Sharma",
+        "Document Number": "ABCPS1234D",
+        "Date of Birth": "22/11/1992",
+        "Issue Date": "10/03/2014",
+        "Expiry Date": null
+      },
+      "raw_text": "INCOME TAX DEPARTMENT GOVT. OF INDIA\nPermanent Account Number Card\nName: Vikram Sharma\nFather's Name: Omprakash Sharma\nDOB: 22/11/1992\nPAN: ABCPS1234D"
+    },
+    {
+      "case_id": "TC_04_VALID_DOMICILE_CERT",
+      "test_intent": "Valid Government Domicile/Residence Certificate issued by Tehsildar.",
+      "declared_category": "Government Certificate",
+      "expected_verdict": "CONSISTENCY CHECKS PASSED",
+      "ocr_confidence": 95.0,
+      "fields": {
+        "Applicant Name": "Rohan Gupta",
+        "Certificate ID": "UP/DOM/2022/8849",
+        "Issuing Authority": "Office of the Tehsildar Sadar",
+        "Issue Date": "18/06/2022",
+        "Expiry Date": null
+      },
+      "raw_text": "GOVERNMENT OF UTTAR PRADESH\nREVENUE DEPARTMENT\nDOMICILE CERTIFICATE\nApplicant Name: Rohan Gupta\nCertificate ID: UP/DOM/2022/8849\nIssuing Authority: Office of the Tehsildar Sadar\nIssue Date: 18/06/2022"
+    },
+    {
+      "case_id": "TC_05_VALID_PASSPORT",
+      "test_intent": "Valid Indian Passport with active validity horizon (Issue < Expiry, Expiry in future).",
+      "declared_category": "Identity Document",
+      "expected_verdict": "CONSISTENCY CHECKS PASSED",
+      "ocr_confidence": 98.0,
+      "fields": {
+        "Name": "Pooja Singhal",
+        "Document Number": "Z1982736",
+        "Date of Birth": "04/09/1995",
+        "Issue Date": "10/01/2020",
+        "Expiry Date": "09/01/2030"
+      },
+      "raw_text": "PASSPORT REPUBLIC OF INDIA\nGiven Name: Pooja\nSurname: Singhal\nPassport No: Z1982736\nDate of Birth: 04/09/1995\nDate of Issue: 10/01/2020\nDate of Expiry: 09/01/2030"
+    },
+    {
+      "case_id": "TC_06_INCOMPLETE_MISSING_NAME",
+      "test_intent": "Incomplete Degree Certificate where Student Name could not be identified or extracted.",
+      "declared_category": "Educational Certificate",
+      "expected_verdict": "NEEDS MANUAL REVIEW",
+      "ocr_confidence": 91.0,
+      "fields": {
+        "Student Name": null,
+        "Certificate ID": "DU/2021/BCOM/401",
+        "Institution": "University of Delhi",
+        "Issue Date": "22/05/2021",
+        "Expiry Date": null
+      },
+      "raw_text": "UNIVERSITY OF DELHI\nThis is to certify that [Obscured/Torn] has passed Bachelor of Commerce.\nCertificate ID: DU/2021/BCOM/401\nIssue Date: 22/05/2021"
+    },
+    {
+      "case_id": "TC_07_INCOMPLETE_MISSING_DOB",
       "test_intent": "Incomplete Identity Document with missing mandatory Date of Birth.",
       "declared_category": "Identity Document",
       "expected_verdict": "NEEDS MANUAL REVIEW",
-      "expected_ml_category": "Identity Document",
+      "ocr_confidence": 92.0,
       "fields": {
-        "Name": "Vikram Sethi",
-        "Document Number": "9921 4410 8821",
+        "Name": "Gaurav Sen",
+        "Document Number": "9921 4410 8823",
         "Date of Birth": null,
         "Issue Date": "10/05/2018",
         "Expiry Date": null
       },
-      "raw_text": "GOVERNMENT OF INDIA\nAADHAAR CARD\nName: Vikram Sethi\nDocument Number: 9921 4410 8821\nIssue Date: 10/05/2018\nAddress: Gomti Nagar, Lucknow"
+      "raw_text": "GOVERNMENT OF INDIA\nAADHAAR CARD\nName: Gaurav Sen\nDocument Number: 9921 4410 8823\nIssue Date: 10/05/2018"
     },
     {
-      "case_id": "TC_FUTURE_ISSUE_03",
-      "test_intent": "Conflicting Government Certificate with issue date post-dated into the future.",
+      "case_id": "TC_08_INCOMPLETE_MISSING_CERT_ID",
+      "test_intent": "Incomplete Government Certificate with missing Certificate/Registration ID.",
       "declared_category": "Government Certificate",
-      "expected_verdict": "INCONSISTENT",
-      "expected_ml_category": "Government Certificate",
+      "expected_verdict": "NEEDS MANUAL REVIEW",
+      "ocr_confidence": 93.0,
       "fields": {
-        "Applicant Name": "Ramesh Chandra",
-        "Certificate ID": "UP/DOM/2029/9912",
-        "Issuing Authority": "Tehsildar Sadar Lucknow",
-        "Issue Date": "15/12/2029",
+        "Applicant Name": "Priya Nair",
+        "Certificate ID": null,
+        "Issuing Authority": "Revenue Division Kerala",
+        "Issue Date": "14/02/2022",
         "Expiry Date": null
       },
-      "raw_text": "GOVERNMENT OF UTTAR PRADESH\nREVENUE DEPARTMENT\nDOMICILE CERTIFICATE\nApplicant Name: Ramesh Chandra\nCertificate ID: UP/DOM/2029/9912\nIssuing Authority: Tehsildar Sadar Lucknow\nIssue Date: 15/12/2029"
+      "raw_text": "GOVERNMENT OF KERALA\nINCOME CERTIFICATE\nApplicant Name: Priya Nair\nIssuing Authority: Revenue Division Kerala\nIssue Date: 14/02/2022"
     },
     {
-      "case_id": "TC_EXPIRED_DOC_04",
-      "test_intent": "Expired Identity / Official credential where expiry date is before current date.",
-      "declared_category": "Identity Document",
-      "expected_verdict": "INCONSISTENT",
-      "expected_ml_category": "Identity Document",
-      "fields": {
-        "Name": "Pooja Malhotra",
-        "Document Number": "P8819204",
-        "Date of Birth": "14/06/1990",
-        "Issue Date": "10/01/2012",
-        "Expiry Date": "09/01/2022"
-      },
-      "raw_text": "PASSPORT REPUBLIC OF INDIA\nName: Pooja Malhotra\nDocument Number: P8819204\nDate of Birth: 14/06/1990\nIssue Date: 10/01/2012\nExpiry Date: 09/01/2022"
-    },
-    {
-      "case_id": "TC_INVERTED_DATES_05",
-      "test_intent": "Severe contradiction: Expiry date occurs before Issue date.",
+      "case_id": "TC_09_CONTRADICTION_FUTURE_ISSUE",
+      "test_intent": "Conflicting Document: Issue date post-dated into the future (e.g. 2035).",
       "declared_category": "Government Certificate",
-      "expected_verdict": "INCONSISTENT",
-      "expected_ml_category": "Government Certificate",
+      "expected_verdict": "INCONSISTENCIES DETECTED",
+      "ocr_confidence": 95.0,
+      "fields": {
+        "Applicant Name": "Ramesh Chandra",
+        "Certificate ID": "UP/DOM/2035/9912",
+        "Issuing Authority": "Tehsildar Sadar Lucknow",
+        "Issue Date": "15/12/2035",
+        "Expiry Date": null
+      },
+      "raw_text": "GOVERNMENT OF UTTAR PRADESH\nREVENUE DEPARTMENT\nDOMICILE CERTIFICATE\nApplicant Name: Ramesh Chandra\nCertificate ID: UP/DOM/2035/9912\nIssuing Authority: Tehsildar Sadar Lucknow\nIssue Date: 15/12/2035"
+    },
+    {
+      "case_id": "TC_10_CONTRADICTION_FUTURE_DOB",
+      "test_intent": "Conflicting Document: Holder Date of Birth is recorded in the future.",
+      "declared_category": "Identity Document",
+      "expected_verdict": "INCONSISTENCIES DETECTED",
+      "ocr_confidence": 94.0,
+      "fields": {
+        "Name": "Kunal Kapoor",
+        "Document Number": "DL-0420200091",
+        "Date of Birth": "18/09/2032",
+        "Issue Date": "12/01/2022",
+        "Expiry Date": "11/01/2042"
+      },
+      "raw_text": "TRANSPORT DEPARTMENT DELHI\nDRIVING LICENCE\nName: Kunal Kapoor\nDocument Number: DL-0420200091\nDate of Birth: 18/09/2032\nIssue Date: 12/01/2022\nExpiry Date: 11/01/2042"
+    },
+    {
+      "case_id": "TC_11_CONTRADICTION_INVERTED_HORIZON",
+      "test_intent": "Chronological Inversion: Expiry date occurs before Issue date.",
+      "declared_category": "Government Certificate",
+      "expected_verdict": "INCONSISTENCIES DETECTED",
+      "ocr_confidence": 96.0,
       "fields": {
         "Applicant Name": "Karan Singhal",
         "Certificate ID": "DL/INC/2021/88",
@@ -77,11 +167,26 @@
       "raw_text": "GOVERNMENT OF NCT OF DELHI\nINCOME CERTIFICATE\nApplicant Name: Karan Singhal\nCertificate ID: DL/INC/2021/88\nIssuing Authority: Revenue Department Delhi\nIssue Date: 20/08/2021\nExpiry Date: 15/01/2020"
     },
     {
-      "case_id": "TC_DOB_AFTER_ISSUE_06",
-      "test_intent": "Severe contradiction: Date of Birth is after document Issue Date.",
+      "case_id": "TC_12_CONTRADICTION_EXPIRED_DOCUMENT",
+      "test_intent": "Expired Identity Credential: Expiration date is in the past.",
       "declared_category": "Identity Document",
-      "expected_verdict": "INCONSISTENT",
-      "expected_ml_category": "Identity Document",
+      "expected_verdict": "INCONSISTENCIES DETECTED",
+      "ocr_confidence": 95.0,
+      "fields": {
+        "Name": "Pooja Malhotra",
+        "Document Number": "P8819204",
+        "Date of Birth": "14/06/1990",
+        "Issue Date": "10/01/2010",
+        "Expiry Date": "09/01/2020"
+      },
+      "raw_text": "PASSPORT REPUBLIC OF INDIA\nName: Pooja Malhotra\nDocument Number: P8819204\nDate of Birth: 14/06/1990\nIssue Date: 10/01/2010\nExpiry Date: 09/01/2020"
+    },
+    {
+      "case_id": "TC_13_CONTRADICTION_ISSUED_BEFORE_BIRTH",
+      "test_intent": "Impossible Chronology: Document issue date strictly precedes holder's date of birth.",
+      "declared_category": "Identity Document",
+      "expected_verdict": "INCONSISTENCIES DETECTED",
+      "ocr_confidence": 96.0,
       "fields": {
         "Name": "Sunil Verma",
         "Document Number": "DL-1420110091",
@@ -92,11 +197,71 @@
       "raw_text": "TRANSPORT DEPARTMENT\nDRIVING LICENCE\nName: Sunil Verma\nDocument Number: DL-1420110091\nDate of Birth: 25/08/2015\nIssue Date: 10/04/2010\nExpiry Date: 09/04/2030"
     },
     {
-      "case_id": "TC_CATEGORY_MISMATCH_07",
-      "test_intent": "User declared Educational Certificate, but uploaded a business receipt from SROIE.",
+      "case_id": "TC_14_CONTRADICTION_PAN_SURNAME_MISMATCH",
+      "test_intent": "PAN 5th character mismatch: Cardholder surname is 'Gupta' but 5th letter is 'S'.",
+      "declared_category": "Identity Document",
+      "expected_verdict": "INCONSISTENCIES DETECTED",
+      "ocr_confidence": 97.0,
+      "fields": {
+        "Name": "Rajesh Gupta",
+        "Document Number": "ABCP S 1234 D",
+        "Date of Birth": "11/04/1988",
+        "Issue Date": "14/02/2012",
+        "Expiry Date": null
+      },
+      "raw_text": "INCOME TAX DEPARTMENT GOVT OF INDIA\nName: Rajesh Gupta\nDOB: 11/04/1988\nPAN: ABCPS1234D"
+    },
+    {
+      "case_id": "TC_15_CONTRADICTION_AADHAAR_FAKE_VERHOEFF",
+      "test_intent": "Aadhaar 12-digit number has invalid Verhoeff checksum digit.",
+      "declared_category": "Identity Document",
+      "expected_verdict": "INCONSISTENCIES DETECTED",
+      "ocr_confidence": 95.0,
+      "fields": {
+        "Name": "Manish Tiwari",
+        "Document Number": "1234 5678 9012",
+        "Date of Birth": "09/12/1994",
+        "Issue Date": "18/07/2017",
+        "Expiry Date": null
+      },
+      "raw_text": "GOVERNMENT OF INDIA\nAADHAAR CARD\nName: Manish Tiwari\nDOB: 09/12/1994\nAadhaar: 1234 5678 9012"
+    },
+    {
+      "case_id": "TC_16_UNCERTAINTY_BLURRY_SCAN",
+      "test_intent": "Degraded Scan OCR Clarity: OCR confidence < 50%, triggers extraction uncertainty rather than fraud accusation.",
       "declared_category": "Educational Certificate",
       "expected_verdict": "NEEDS MANUAL REVIEW",
-      "expected_ml_category": "Financial / Administrative Record",
+      "ocr_confidence": 42.0,
+      "fields": {
+        "Student Name": "A. K. Roy",
+        "Certificate ID": "UNIV/8821",
+        "Institution": "Calcutta University",
+        "Issue Date": "14/08/2021",
+        "Expiry Date": null
+      },
+      "raw_text": "C@lcut!a Un1vers1ty\nTh1s 1s t0 cert1fy th@t A. K. R0y h@s p@ssed.\nCert: UNIV/8821\nD@te: 14/08/2021"
+    },
+    {
+      "case_id": "TC_17_UNCERTAINTY_BLANK_OR_CORRUPT",
+      "test_intent": "Unreadable or blank document yielding insufficient characters (<30 chars).",
+      "declared_category": "Identity Document",
+      "expected_verdict": "UNABLE TO VERIFY",
+      "ocr_confidence": 20.0,
+      "fields": {
+        "Name": null,
+        "Document Number": null,
+        "Date of Birth": null,
+        "Issue Date": null,
+        "Expiry Date": null
+      },
+      "raw_text": "Blurry smudged scan"
+    },
+    {
+      "case_id": "TC_18_CATEGORY_MISMATCH_INVOICE",
+      "test_intent": "User filed under Educational Certificate, but document is actually a commercial invoice.",
+      "declared_category": "Educational Certificate",
+      "expected_verdict": "NEEDS MANUAL REVIEW",
+      "ocr_confidence": 92.0,
       "fields": {
         "Student Name": null,
         "Certificate ID": null,
@@ -104,7 +269,37 @@
         "Issue Date": "12/03/2018",
         "Expiry Date": null
       },
-      "raw_text": "BOOKSTORE & STATIONERY MART SDN BHD\nTAX INVOICE / RECEIPT\nInvoice No: INV-2018-9941\nDate: 12/03/2018\nTOTAL AMOUNT DUE: $46.11\nTHANK YOU FOR YOUR PURCHASE"
+      "raw_text": "BOOKSTORE & STATIONERY MART\nTAX INVOICE / RECEIPT\nInvoice No: INV-2018-9941\nDate: 12/03/2018\nTotal: 450.00 INR\nTHANK YOU FOR SHOPPING"
+    },
+    {
+      "case_id": "TC_19_EDGE_LEAP_YEAR_DATE",
+      "test_intent": "Valid Edge Case: Date of Birth on Leap Year 29th February 2000.",
+      "declared_category": "Identity Document",
+      "expected_verdict": "CONSISTENCY CHECKS PASSED",
+      "ocr_confidence": 97.0,
+      "fields": {
+        "Name": "Deepak Joshi",
+        "Document Number": "2093 4519 8273",
+        "Date of Birth": "29/02/2000",
+        "Issue Date": "15/03/2019",
+        "Expiry Date": null
+      },
+      "raw_text": "GOVERNMENT OF INDIA\nAADHAAR CARD\nName: Deepak Joshi\nDOB: 29/02/2000\nUID: 2093 4519 8273\nIssue Date: 15/03/2019"
+    },
+    {
+      "case_id": "TC_20_EDGE_ORDINAL_DATE_STRING",
+      "test_intent": "Valid Edge Case: Issue date expressed in ordinal long text (e.g. 15th August 2022).",
+      "declared_category": "Educational Certificate",
+      "expected_verdict": "CONSISTENCY CHECKS PASSED",
+      "ocr_confidence": 96.0,
+      "fields": {
+        "Student Name": "Swati Deshmukh",
+        "Certificate ID": "MU/2022/ENG/991",
+        "Institution": "University of Mumbai",
+        "Issue Date": "15th August 2022",
+        "Expiry Date": null
+      },
+      "raw_text": "UNIVERSITY OF MUMBAI\nThis is to certify that Swati Deshmukh was awarded Bachelor of Engineering.\nCertificate ID: MU/2022/ENG/991\nDated: 15th August 2022"
     }
   ]
 }
