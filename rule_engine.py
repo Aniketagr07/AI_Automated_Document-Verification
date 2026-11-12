@@ -11,7 +11,10 @@ Implements an explainable forward-chaining verification system:
 from datetime import date
 from typing import Dict, List, Tuple, Any, Optional
 import re
-from document_schema import get_schema, parse_date_robust, validate_document_schema
+from document_schema import (
+    get_schema, parse_date_robust, validate_document_schema,
+    FIELD_EQUIVALENTS, is_course_completion_document
+)
 from verhoeff import validate_verhoeff, validate_pan_structure
 
 
@@ -38,27 +41,50 @@ def run_rule_engine(
     schema = get_schema(category_name)
     triggered_rules: List[Dict[str, Any]] = []
 
-    # Helper to get field value safely (handles flat dict or nested dict)
+    # Helper to get field value safely (handles flat dict, nested dict, or equivalent fields)
     def get_val(f_name: str) -> Optional[str]:
         field_meta = extracted_fields.get(f_name, {})
         if isinstance(field_meta, dict):
             val = field_meta.get("value")
         else:
             val = field_meta
-        return str(val).strip() if val is not None and str(val).strip() else None
+        if val is not None and str(val).strip():
+            return str(val).strip()
+        for eq in FIELD_EQUIVALENTS.get(f_name, []):
+            eq_meta = extracted_fields.get(eq, {})
+            eq_val = eq_meta.get("value") if isinstance(eq_meta, dict) else eq_meta
+            if eq_val is not None and str(eq_val).strip():
+                return str(eq_val).strip()
+        return None
 
     def get_evidence(f_name: str) -> str:
         field_meta = extracted_fields.get(f_name, {})
+        if isinstance(field_meta, dict) and field_meta.get("evidence"):
+            return str(field_meta.get("evidence"))
+        for eq in FIELD_EQUIVALENTS.get(f_name, []):
+            eq_meta = extracted_fields.get(eq, {})
+            if isinstance(eq_meta, dict) and eq_meta.get("evidence"):
+                return str(eq_meta.get("evidence"))
         if isinstance(field_meta, dict):
             return str(field_meta.get("evidence", "No evidence recorded."))
         return f"Direct value provided: '{field_meta}'"
+
+    is_course_cert = is_course_completion_document(extracted_fields, raw_text)
 
     # -----------------------------------------------------------------------
     # RULE R001: Mandatory Field Extraction Check
     # -----------------------------------------------------------------------
     for field_name, constraint in schema.fields.items():
         val = get_val(field_name)
+        is_participation = bool(re.search(r"(?i)\b(?:participation|participated|attendance|attended|workshop|webinar)\b", raw_text))
         if constraint.required and not val:
+            if is_course_cert and is_participation and field_name in ["Certificate ID", "Document Number"]:
+                continue
+            if is_course_cert and field_name not in [
+                "Student Name", "Applicant Name", "Name", "Full Name", "Certificate ID", "Document Number",
+                "Institution", "Issuing Authority", "Issue Date"
+            ]:
+                continue
             triggered_rules.append({
                 "Rule ID": "R001",
                 "Rule Name": f"Mandatory Field Check: {field_name}",
@@ -210,7 +236,13 @@ def run_rule_engine(
     if raw_text and schema.required_keywords:
         text_lower = raw_text.lower()
         matched_keywords = [kw for kw in schema.required_keywords if kw in text_lower]
-        if len(matched_keywords) == 0:
+        course_kws = [
+            "certificate", "completion", "achievement", "completed", "course",
+            "training", "skillup", "prompt", "engineering", "copilot",
+            "simplilearn", "microsoft", "google", "aws", "coursera", "udemy", "edx"
+        ]
+        is_course_doc = is_course_cert or any(kw in text_lower for kw in course_kws)
+        if len(matched_keywords) == 0 and not is_course_doc:
             triggered_rules.append({
                 "Rule ID": "R009",
                 "Rule Name": "Missing Domain Attestation Phrases",
@@ -246,18 +278,21 @@ def run_rule_engine(
     # -----------------------------------------------------------------------
     if ml_predicted_category and ml_predicted_category != "UNKNOWN":
         if ml_predicted_category != category_name:
-            triggered_rules.append({
-                "Rule ID": "R011",
-                "Rule Name": "Category Classification Discrepancy",
-                "Condition": f"ML Predicted Category ('{ml_predicted_category}') != Declared Category ('{category_name}')",
-                "Severity": "NEEDS MANUAL REVIEW",
-                "Explanation": (
-                    f"The machine learning document classifier predicted this document as '{ml_predicted_category}', "
-                    f"whereas the user declared it as '{category_name}'. The document layout may differ from standard."
-                ),
-                "Evidence": f"ML Predicted: '{ml_predicted_category}' vs Declared: '{category_name}'",
-                "Recommended Action": "Confirm whether the document was filed under the appropriate category."
-            })
+            # Course/training certificates uploaded under educational or government categories
+            # should not trigger false category discrepancy warnings
+            if not (is_course_cert and category_name in ["Educational Certificate", "Government Certificate"]):
+                triggered_rules.append({
+                    "Rule ID": "R011",
+                    "Rule Name": "Category Classification Discrepancy",
+                    "Condition": f"ML Predicted Category ('{ml_predicted_category}') != Declared Category ('{category_name}')",
+                    "Severity": "NEEDS MANUAL REVIEW",
+                    "Explanation": (
+                        f"The machine learning document classifier predicted this document as '{ml_predicted_category}', "
+                        f"whereas the user declared it as '{category_name}'. The document layout may differ from standard."
+                    ),
+                    "Evidence": f"ML Predicted: '{ml_predicted_category}' vs Declared: '{category_name}'",
+                    "Recommended Action": "Confirm whether the document was filed under the appropriate category."
+                })
 
     # -----------------------------------------------------------------------
     # RULE R013: Aadhaar Verhoeff Dihedral (D5) Checksum Validation
@@ -267,10 +302,10 @@ def run_rule_engine(
     digits_only = re.sub(r"\D", "", id_val_raw)
 
     is_aadhaar = (
-        category_name == "Identity Document" or
         "aadhaar" in raw_text.lower() or
         "uidai" in raw_text.lower() or
-        "unique identification" in raw_text.lower()
+        "unique identification" in raw_text.lower() or
+        (category_name == "Identity Document" and not is_course_cert)
     )
 
     if is_aadhaar and len(digits_only) == 12:

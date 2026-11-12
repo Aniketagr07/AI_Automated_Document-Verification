@@ -536,5 +536,742 @@ class TestSIHEnhancedForensicsAndChecksums(unittest.TestCase):
         self.assertGreaterEqual(res["proposed_accuracy"], 95.0)
 
 
+class TestCourseCompletionCertificateVerification(unittest.TestCase):
+    """
+    R1, R2, R3: Automated tests for course / training completion certificate extraction,
+    tolerant category mapping, and verification pipeline accuracy without false failures.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        # Locate sample certificate document
+        candidate_paths = [
+            Path(__file__).parent / "data" / "Microsoft_simplelearn_Introduction to Prompt Engineering with.pdf",
+            Path(r"C:\Users\shiva\OneDrive\RESUMA\Random_certification\Microsoft_simplelearn_Introduction to Prompt Engineering with.pdf")
+        ]
+        cls.sample_pdf_path = None
+        for p in candidate_paths:
+            if p.exists():
+                cls.sample_pdf_path = p
+                break
+
+    def setUp(self):
+        if not self.sample_pdf_path or not self.sample_pdf_path.exists():
+            self.skipTest("Sample certificate document 'Microsoft_simplelearn_Introduction to Prompt Engineering with.pdf' not found.")
+        with open(self.sample_pdf_path, "rb") as f:
+            self.pdf_bytes = f.read()
+        self.filename = "Microsoft_simplelearn_Introduction to Prompt Engineering with.pdf"
+        self.processed_doc = process_file_bytes(self.pdf_bytes, self.filename)
+
+    def test_sample_certificate_extraction_educational_category(self):
+        """Verify clean extraction under Educational Certificate without false mandatory field errors."""
+        fields = extract_structured_fields(self.processed_doc, "Educational Certificate")
+
+        # 1. Recipient Name extraction
+        self.assertEqual(fields["Student Name"]["value"], "Shivam Patil")
+        self.assertFalse(fields["Student Name"]["manual_verification_required"])
+
+        # 2. Certificate ID / Code extraction
+        self.assertEqual(fields["Certificate ID"]["value"], "9380068")
+        self.assertFalse(fields["Certificate ID"]["manual_verification_required"])
+
+        # 3. Issuing Authority / Institution extraction
+        self.assertIn(fields["Institution"]["value"], ["Simplilearn", "Microsoft SkillUp", "Microsoft"])
+        self.assertFalse(fields["Institution"]["manual_verification_required"])
+
+        # 4. Issue Date continues to be extracted
+        self.assertEqual(fields["Issue Date"]["value"], "11th November 2025")
+        self.assertFalse(fields["Issue Date"]["manual_verification_required"])
+
+        # 5. Schema Validation
+        schema_results = validate_document_schema(fields, "Educational Certificate")
+        statuses = {r["Field"]: r["Status"] for r in schema_results}
+        self.assertNotEqual(statuses.get("Student Name"), "MISSING")
+        self.assertNotEqual(statuses.get("Certificate ID"), "MISSING")
+        self.assertNotEqual(statuses.get("Institution"), "MISSING")
+        self.assertEqual(statuses.get("Issue Date"), "VALID FORMAT")
+
+        # 6. Verification Pipeline Execution
+        ml_res = predict_document_category(self.processed_doc["full_text"])
+        _, rules = run_rule_engine(
+            extracted_fields=fields,
+            category_name="Educational Certificate",
+            raw_text=self.processed_doc["full_text"],
+            ocr_confidence=self.processed_doc["average_ocr_confidence"],
+            ml_predicted_category=ml_res.get("predicted_category")
+        )
+        outcome = evaluate_verification_decision(
+            extracted_fields=fields,
+            schema_results=schema_results,
+            rule_results=rules,
+            ml_result=ml_res,
+            ocr_confidence=self.processed_doc["average_ocr_confidence"],
+            page_count=self.processed_doc["page_count"],
+            raw_text=self.processed_doc["full_text"],
+            declared_category="Educational Certificate"
+        )
+
+        self.assertEqual(outcome.final_status, STATUS_CONSISTENCY_PASSED)
+        self.assertFalse(outcome.requires_admin_review)
+        self.assertFalse(outcome.has_missing_required)
+        for reason in outcome.detailed_reasons:
+            self.assertNotIn("Mandatory field 'Student Name' could not be identified", reason)
+            self.assertNotIn("Mandatory field 'Certificate ID' could not be identified", reason)
+            self.assertNotIn("Mandatory field 'Institution' could not be identified", reason)
+
+    def test_sample_certificate_extraction_government_category(self):
+        """Verify tolerant extraction under Government Certificate without false mandatory field errors."""
+        fields = extract_structured_fields(self.processed_doc, "Government Certificate")
+
+        # 1. Recipient Name extraction mapped to Applicant Name
+        self.assertEqual(fields["Applicant Name"]["value"], "Shivam Patil")
+        self.assertFalse(fields["Applicant Name"]["manual_verification_required"])
+
+        # 2. Certificate ID / Code extraction
+        self.assertEqual(fields["Certificate ID"]["value"], "9380068")
+        self.assertFalse(fields["Certificate ID"]["manual_verification_required"])
+
+        # 3. Issuing Authority extraction
+        self.assertIn(fields["Issuing Authority"]["value"], ["Simplilearn", "Microsoft SkillUp", "Microsoft"])
+        self.assertFalse(fields["Issuing Authority"]["manual_verification_required"])
+
+        # 4. Issue Date continues to be extracted
+        self.assertEqual(fields["Issue Date"]["value"], "11th November 2025")
+        self.assertFalse(fields["Issue Date"]["manual_verification_required"])
+
+        # 5. Schema Validation
+        schema_results = validate_document_schema(fields, "Government Certificate")
+        statuses = {r["Field"]: r["Status"] for r in schema_results}
+        self.assertNotEqual(statuses.get("Applicant Name"), "MISSING")
+        self.assertNotEqual(statuses.get("Certificate ID"), "MISSING")
+        self.assertNotEqual(statuses.get("Issuing Authority"), "MISSING")
+        self.assertEqual(statuses.get("Issue Date"), "VALID FORMAT")
+
+        # 6. Verification Pipeline Execution
+        ml_res = predict_document_category(self.processed_doc["full_text"])
+        _, rules = run_rule_engine(
+            extracted_fields=fields,
+            category_name="Government Certificate",
+            raw_text=self.processed_doc["full_text"],
+            ocr_confidence=self.processed_doc["average_ocr_confidence"],
+            ml_predicted_category=ml_res.get("predicted_category")
+        )
+        outcome = evaluate_verification_decision(
+            extracted_fields=fields,
+            schema_results=schema_results,
+            rule_results=rules,
+            ml_result=ml_res,
+            ocr_confidence=self.processed_doc["average_ocr_confidence"],
+            page_count=self.processed_doc["page_count"],
+            raw_text=self.processed_doc["full_text"],
+            declared_category="Government Certificate"
+        )
+
+        self.assertEqual(outcome.final_status, STATUS_CONSISTENCY_PASSED)
+        self.assertFalse(outcome.requires_admin_review)
+        self.assertFalse(outcome.has_missing_required)
+        for reason in outcome.detailed_reasons:
+            self.assertNotIn("Mandatory field 'Applicant Name' could not be identified", reason)
+            self.assertNotIn("Mandatory field 'Certificate ID' could not be identified", reason)
+            self.assertNotIn("Mandatory field 'Issuing Authority' could not be identified", reason)
+
+    def test_completion_header_phrasing_layout_patterns(self):
+        """R1: Test extraction where name appears between completion headers and completion phrasing."""
+        from information_extractor import extract_course_completion_name
+
+        patterns = [
+            ("DECLARATION OF COMPLETION\nPresented to\nShivam Patil\nhas successfully completed\nIntroduction to Prompt Engineering", "Shivam Patil"),
+            ("CERTIFICATE OF COMPLETION\nShivam Patil\nhas completed the required courses", "Shivam Patil"),
+            ("CERTIFICATE OF ACHIEVEMENT\nAwarded to\nShivam Patil\nfor successfully completing the course", "Shivam Patil"),
+        ]
+
+        for text, expected_name in patterns:
+            res = extract_course_completion_name(text)
+            self.assertIsNotNone(res, f"Failed for text: {text}")
+            candidate, evidence, conf = res
+            self.assertEqual(candidate, expected_name)
+            self.assertGreaterEqual(conf, 90.0)
+
+    def test_certificate_code_aliases_with_whitespace_before_colon(self):
+        """R1: Test alias mappings and regex handling optional whitespace before colons."""
+        from information_extractor import extract_field_from_lines
+        from document_schema import get_schema
+
+        aliases = get_schema("Educational Certificate").alias_map["Certificate ID"]
+        test_lines = [
+            ("Certificate code : 9380068", "9380068"),
+            ("cert code: 9380068", "9380068"),
+            ("verification code : 9380068", "9380068"),
+            ("code : 9380068", "9380068"),
+            ("credential id: 9380068", "9380068"),
+            ("cert id : 9380068", "9380068"),
+            ("Certificate code: 9380068", "9380068"),
+        ]
+
+        for line, expected_id in test_lines:
+            res = extract_field_from_lines([line], aliases, "identifier")
+            self.assertIsNotNone(res, f"Failed on line: '{line}'")
+            val, evidence, conf = res
+            self.assertEqual(val, expected_id)
+            self.assertGreaterEqual(conf, 85.0)
+
+    def test_online_learning_platforms_keyword_extraction(self):
+        """R1: Test identification of major online learning platforms and certifiers."""
+        from information_extractor import extract_template_institution
+
+        platforms = [
+            ("Microsoft SkillUp", "Microsoft SkillUp"),
+            ("Simplilearn", "Simplilearn"),
+            ("Microsoft", "Microsoft"),
+            ("Google Cloud", "Google Cloud"),
+            ("AWS", "AWS"),
+            ("Coursera", "Coursera"),
+            ("Udemy", "Udemy"),
+            ("edX", "edX"),
+        ]
+
+        for phrase, canonical_name in platforms:
+            doc_text = f"Certificate issued by {phrase} for course completion."
+            res = extract_template_institution(doc_text)
+            self.assertIsNotNone(res, f"Failed for platform: {phrase}")
+            cand, ev, conf = res
+            self.assertEqual(cand, canonical_name)
+            self.assertGreaterEqual(conf, 85.0)
+
+        # Google without Cloud should canonically resolve to Google
+        res_google = extract_template_institution("Certificate issued by Google for completing data foundations.")
+        self.assertIsNotNone(res_google)
+        self.assertEqual(res_google[0], "Google")
+
+    def test_tolerant_cross_category_field_mapping(self):
+        """R2: Test that equivalent fields prevent false mandatory validation failures."""
+        # Simulated extraction result with cross-category keys
+        fields = {
+            "Student Name": {"value": "Shivam Patil", "confidence": 92.0, "status": "PRESENT"},
+            "Certificate ID": {"value": "9380068", "confidence": 90.0, "status": "PRESENT"},
+            "Institution": {"value": "Simplilearn", "confidence": 88.0, "status": "PRESENT"},
+            "Issue Date": {"value": "11th November 2025", "confidence": 88.0, "status": "PRESENT"},
+            "Expiry Date": {"value": None, "confidence": 0.0, "status": "NOT_APPLICABLE"}
+        }
+
+        # Validating under Government Certificate where schema expects Applicant Name & Issuing Authority
+        gov_schema_res = validate_document_schema(fields, "Government Certificate")
+        statuses = {r["Field"]: r["Status"] for r in gov_schema_res}
+        self.assertEqual(statuses.get("Applicant Name"), "PRESENT")
+        self.assertEqual(statuses.get("Issuing Authority"), "PRESENT")
+        self.assertEqual(statuses.get("Certificate ID"), "PRESENT")
+        self.assertEqual(statuses.get("Issue Date"), "VALID FORMAT")
+        self.assertNotIn("MISSING", statuses.values())
+
+        # Validating under Identity Document where schema expects Full Name
+        id_schema_res = validate_document_schema(fields, "Identity Document")
+        id_statuses = {r["Field"]: r["Status"] for r in id_schema_res}
+        self.assertEqual(id_statuses.get("Name"), "PRESENT")
+        self.assertEqual(id_statuses.get("Date of Birth"), "NOT_APPLICABLE")
+
+    def test_adversarial_name_extraction_edge_cases(self):
+        """R1: Adversarially probe multi-line names, phrasing preceding header, and org prefixes."""
+        from information_extractor import extract_course_completion_name
+
+        # Case 1: Multi-line recipient name
+        text_multiline = "CERTIFICATE OF COMPLETION\nPresented to\nMary Jane\nWatson\nhas successfully completed\nMachine Learning"
+        res1 = extract_course_completion_name(text_multiline)
+        self.assertIsNotNone(res1)
+        self.assertEqual(res1[0], "Mary Jane Watson")
+
+        # Case 2: Phrasing appears before the completion header
+        text_early_phrase = "For completing prerequisites\nCERTIFICATE OF TRAINING\nConferred upon\nJohn Doe\ncompleted the course"
+        res2 = extract_course_completion_name(text_early_phrase)
+        self.assertIsNotNone(res2)
+        self.assertEqual(res2[0], "John Doe")
+
+        # Case 3: Org/educational prefix line before recipient name
+        text_org_prefix = "Executive Education\nShivam Patil\nIntroduction to Prompt Engineering\nCertificate code : 9380068"
+        res3 = extract_course_completion_name(text_org_prefix)
+        self.assertIsNotNone(res3)
+        self.assertEqual(res3[0], "Shivam Patil")
+
+    def test_code_with_trailing_parenthetical_remarks(self):
+        """R1: Test that parenthetical verify remarks are stripped from identifier candidates."""
+        from information_extractor import extract_field_from_lines
+        from document_schema import get_schema
+
+        aliases = get_schema("Educational Certificate").alias_map["Certificate ID"]
+        line = "Certificate code : 9380068 (Please verify online)"
+        res = extract_field_from_lines([line], aliases, "identifier")
+        self.assertIsNotNone(res)
+        val, ev, conf = res
+        self.assertEqual(val, "9380068")
+
+        # Confirm validation does not produce a FORMAT WARNING
+        fields = {"Certificate ID": {"value": val, "confidence": conf, "status": "PRESENT"}}
+        schema_res = validate_document_schema(fields, "Educational Certificate")
+        statuses = {r["Field"]: r["Status"] for r in schema_res}
+        self.assertNotEqual(statuses.get("Certificate ID"), "FORMAT WARNING")
+
+    def test_institution_multiline_boundaries(self):
+        """R1: Test that multi-line text preceding an institution keyword does not leak into the name."""
+        from information_extractor import extract_template_institution
+
+        text = "John Doe\nCourse in Python\nStanford University"
+        res = extract_template_institution(text)
+        self.assertIsNotNone(res)
+        self.assertEqual(res[0], "Stanford University")
+
+    def test_completion_date_alias_extraction(self):
+        """R1: Test extraction of completion date aliases."""
+        from information_extractor import extract_field_from_lines
+        from document_schema import get_schema
+
+        aliases = get_schema("Educational Certificate").alias_map["Issue Date"]
+        for line, exp_date in [
+            ("Date of completion: 11th November 2025", "11th November 2025"),
+            ("Completed on: 11th November 2025", "11th November 2025")
+        ]:
+            res = extract_field_from_lines([line], aliases, "date")
+            self.assertIsNotNone(res, f"Failed on: {line}")
+            self.assertEqual(res[0], exp_date)
+
+    def test_platform_standalone_header_institution_extraction(self):
+        """R1: Ensure standalone platform names at top of certificate do not swallow next line header."""
+        text = (
+            "Simplilearn\n"
+            "CERTIFICATE OF COMPLETION\n"
+            "Presented to\n"
+            "John Doe\n"
+            "has successfully completed\n"
+            "Python Course\n"
+            "11th November 2025\n"
+            "Certificate code : 9380068"
+        )
+        doc = {"pages": [{"page_number": 1, "text": text}], "full_text": text, "filename": "cert.pdf"}
+        res = extract_structured_fields(doc, "Educational Certificate")
+        self.assertIsNotNone(res.get("Institution"))
+        self.assertEqual(res["Institution"]["value"], "Simplilearn")
+        self.assertNotEqual(res["Institution"]["value"], "CERTIFICATE OF COMPLETION")
+
+    def test_recipient_name_inline_phrasing_and_punctuation_triggers(self):
+        """R1: Test punctuation in intermediate triggers and inline phrasing line names."""
+        from information_extractor import extract_course_completion_name
+
+        # Case A: Colon in intermediate trigger followed by multi-line name
+        text_a = (
+            "CERTIFICATE OF COMPLETION\n"
+            "Presented to:\n"
+            "Mary Jane\n"
+            "Watson\n"
+            "has successfully completed\n"
+            "Python for Data Science"
+        )
+        res_a = extract_course_completion_name(text_a)
+        self.assertIsNotNone(res_a)
+        self.assertEqual(res_a[0], "Mary Jane Watson")
+
+        # Case B: Multiple organization headers preceding header, and name on same line as phrasing
+        text_b = (
+            "Acme Institute of Technology\n"
+            "Online Learning Center\n"
+            "CERTIFICATE OF COMPLETION\n"
+            "John Doe has successfully completed\n"
+            "Introduction to Python"
+        )
+        res_b = extract_course_completion_name(text_b)
+        self.assertIsNotNone(res_b)
+        self.assertEqual(res_b[0], "John Doe")
+
+    def test_identity_document_course_certificate_tolerant_mapping_end_to_end(self):
+        """R2: Process real sample certificate under Identity Document category tolerantly."""
+        fields = extract_structured_fields(self.processed_doc, "Identity Document")
+        self.assertEqual(fields["Name"]["value"], "Shivam Patil")
+        self.assertEqual(fields["Document Number"]["value"], "9380068")
+
+        schema_res = validate_document_schema(fields, "Identity Document", raw_text=self.processed_doc["full_text"])
+        statuses = {r["Field"]: r["Status"] for r in schema_res}
+        self.assertEqual(statuses.get("Name"), "PRESENT")
+        self.assertEqual(statuses.get("Document Number"), "PRESENT")
+        self.assertEqual(statuses.get("Date of Birth"), "NOT_APPLICABLE")
+        self.assertNotEqual(statuses.get("Date of Birth"), "MISSING")
+
+        _, rules = run_rule_engine(
+            extracted_fields=fields,
+            category_name="Identity Document",
+            raw_text=self.processed_doc["full_text"]
+        )
+        r001_rules = [r for r in rules if r.get("Rule ID") == "R001"]
+        self.assertEqual(len(r001_rules), 0)
+
+    def test_certificate_code_with_dash_or_equals_separator(self):
+        """R1: Test certificate code extraction with dash and equals separators."""
+        from information_extractor import extract_field_from_lines
+        from document_schema import get_schema
+
+        aliases = get_schema("Educational Certificate").alias_map["Certificate ID"]
+        for line, exp_code in [
+            ("Certificate code - 9380068", "9380068"),
+            ("cert code = 9380068", "9380068"),
+            ("credential id - 9380068", "9380068")
+        ]:
+            res = extract_field_from_lines([line], aliases, "identifier")
+            self.assertIsNotNone(res, f"Failed on: {line}")
+            self.assertEqual(res[0], exp_code)
+
+    def test_names_containing_subwords_not_rejected(self):
+        """R1: Ensure person names containing subwords (e.g. 'id' in David, 'inc' in Vincent) are not rejected."""
+        from information_extractor import extract_course_completion_name, extract_structured_fields
+
+        subword_test_cases = [
+            ("David Miller", (
+                "CERTIFICATE OF COMPLETION\n"
+                "David Miller\n"
+                "has successfully completed\n"
+                "Python for Data Science\n"
+                "Certificate code : 9380068\n"
+                "11th November 2025\n"
+                "Simplilearn"
+            )),
+            ("Vincent Price", (
+                "CERTIFICATE OF COMPLETION\n"
+                "Vincent Price\n"
+                "has successfully completed\n"
+                "Machine Learning Fundamentals\n"
+                "Certificate code : 9380068\n"
+                "11th November 2025\n"
+                "Simplilearn"
+            )),
+            ("Rashid Khan", (
+                "CERTIFICATE OF COMPLETION\n"
+                "Presented to\n"
+                "Rashid Khan\n"
+                "has successfully completed\n"
+                "Cloud Computing\n"
+                "Certificate code : 9380068\n"
+                "11th November 2025\n"
+                "Simplilearn"
+            ))
+        ]
+
+        for expected_name, text in subword_test_cases:
+            res = extract_course_completion_name(text)
+            self.assertIsNotNone(res, f"Failed extracting name for {expected_name}")
+            self.assertEqual(res[0], expected_name)
+
+            doc = {"pages": [{"page_number": 1, "text": text}], "full_text": text, "filename": "cert.pdf"}
+            fields = extract_structured_fields(doc, "Educational Certificate")
+            self.assertEqual(fields["Student Name"]["value"], expected_name)
+            self.assertEqual(fields["Student Name"]["status"], "PRESENT")
+
+    def test_intermediate_triggers_not_prepended_to_name(self):
+        """R1: Ensure trigger phrases ('Certifies that', 'This certificate is proudly presented to') are not prepended to name."""
+        from information_extractor import extract_course_completion_name
+
+        text_a = (
+            "CERTIFICATE OF COMPLETION\n"
+            "Certifies that\n"
+            "John Doe\n"
+            "has successfully completed\n"
+            "Deep Learning\n"
+            "Certificate code : 9380068"
+        )
+        res_a = extract_course_completion_name(text_a)
+        self.assertIsNotNone(res_a)
+        self.assertEqual(res_a[0], "John Doe")
+        self.assertNotIn("Certifies", res_a[0])
+
+        text_b = (
+            "CERTIFICATE OF COMPLETION\n"
+            "This certificate is proudly presented to\n"
+            "Alice Wonderland\n"
+            "has completed\n"
+            "Web Development"
+        )
+        res_b = extract_course_completion_name(text_b)
+        self.assertIsNotNone(res_b)
+        self.assertEqual(res_b[0], "Alice Wonderland")
+        self.assertNotIn("presented", res_b[0].lower())
+
+    def test_omitted_recipient_name_does_not_extract_course_or_phrasing(self):
+        """R1: When recipient name is omitted, extractor must not extract phrasing or course title as name."""
+        from information_extractor import extract_course_completion_name
+
+        text = (
+            "CERTIFICATE OF COMPLETION\n"
+            "has successfully completed\n"
+            "Python for Beginners\n"
+            "Certificate code : 9380068\n"
+            "11th November 2025\n"
+            "Simplilearn"
+        )
+        res = extract_course_completion_name(text)
+        self.assertIsNone(res)
+
+    def test_course_indicators_consistent_across_schema_and_rule_engine(self):
+        """R2: Ensure course certificates with varied indicators are handled tolerantly across schema & rules."""
+        raw_text = (
+            "CERTIFICATE OF ACHIEVEMENT\n"
+            "Presented to\n"
+            "John Doe\n"
+            "has completed\n"
+            "Python Fundamentals\n"
+            "cert code : 9380068\n"
+            "11th November 2025"
+        )
+        doc = {"pages": [{"page_number": 1, "text": raw_text}], "full_text": raw_text, "filename": "cert.pdf"}
+        fields = extract_structured_fields(doc, "Identity Document")
+        schema_res = validate_document_schema(fields, "Identity Document", raw_text=raw_text)
+        dob_status = next((r["Status"] for r in schema_res if r["Field"] == "Date of Birth"), None)
+        self.assertEqual(dob_status, "NOT_APPLICABLE")
+
+        _, rules = run_rule_engine(fields, "Identity Document", raw_text=raw_text)
+        r001_dob = [r for r in rules if r.get("Rule ID") == "R001" and "Date of Birth" in r.get("Rule Name", "")]
+        self.assertEqual(len(r001_dob), 0)
+
+    def test_inline_and_same_line_completion_header_layouts(self):
+        """R1: Test inline and same-line layouts where name is on header line or phrasing line."""
+        from information_extractor import extract_course_completion_name
+
+        cases = [
+            ("CERTIFICATE OF COMPLETION - Jane Doe has successfully completed Python Course", "Jane Doe"),
+            ("CERTIFICATE OF COMPLETION: Jane Doe\nhas successfully completed Python Course", "Jane Doe"),
+            ("CERTIFICATE OF ACHIEVEMENT: Jane Doe has completed Deep Learning", "Jane Doe"),
+            ("DECLARATION OF COMPLETION. Jane Doe has successfully completed Python", "Jane Doe"),
+        ]
+        for text, exp in cases:
+            res = extract_course_completion_name(text)
+            self.assertIsNotNone(res, f"Failed extracting from: {text}")
+            self.assertEqual(res[0], exp)
+
+    def test_phrasing_line_connectors_do_not_pollute_recipient_name(self):
+        """R1: Ensure connectors and attendance phrasing on phrasing lines do not pollute recipient name."""
+        from information_extractor import extract_course_completion_name
+
+        cases = [
+            ("CERTIFICATE OF COMPLETION\nJane Doe\nwho has successfully completed\nPython Course", "Jane Doe"),
+            ("CERTIFICATE OF COMPLETION\nJane Doe\nhas attended and successfully completed\nPython Course", "Jane Doe"),
+            ("CERTIFICATE OF COMPLETION\nJane Doe\nfor the successful completion of Python Course", "Jane Doe"),
+            ("CERTIFICATE OF COMPLETION\nJane Doe\nand has completed the requirements\nPython Course", "Jane Doe"),
+        ]
+        for text, exp in cases:
+            res = extract_course_completion_name(text)
+            self.assertIsNotNone(res, f"Failed extracting from: {text}")
+            self.assertEqual(res[0], exp)
+
+    def test_multiline_label_does_not_extract_label_as_value(self):
+        """R1: Ensure meta-words (Name, of Issue) are not extracted as field values when label is on separate line."""
+        from information_extractor import extract_structured_fields
+
+        doc_edu = {
+            "pages": [{"page_number": 1, "text": (
+                "CERTIFICATE OF COMPLETION\n"
+                "Recipient Name\n"
+                "Jane Doe\n"
+                "has successfully completed\n"
+                "Certificate code : 9380068\n"
+                "11th November 2025\n"
+                "Simplilearn"
+            )}],
+            "full_text": (
+                "CERTIFICATE OF COMPLETION\n"
+                "Recipient Name\n"
+                "Jane Doe\n"
+                "has successfully completed\n"
+                "Certificate code : 9380068\n"
+                "11th November 2025\n"
+                "Simplilearn"
+            ),
+            "filename": "cert.pdf"
+        }
+        fields_edu = extract_structured_fields(doc_edu, "Educational Certificate")
+        self.assertEqual(fields_edu["Student Name"]["value"], "Jane Doe")
+        self.assertNotEqual(fields_edu["Student Name"]["value"], "Name")
+
+        doc_gov = {
+            "pages": [{"page_number": 1, "text": (
+                "CERTIFICATE OF COMPLETION\n"
+                "Applicant Name\n"
+                "Jane Doe\n"
+                "has successfully completed\n"
+                "Certificate code : 9380068\n"
+                "11th November 2025\n"
+                "Simplilearn"
+            )}],
+            "full_text": (
+                "CERTIFICATE OF COMPLETION\n"
+                "Applicant Name\n"
+                "Jane Doe\n"
+                "has successfully completed\n"
+                "Certificate code : 9380068\n"
+                "11th November 2025\n"
+                "Simplilearn"
+            ),
+            "filename": "cert.pdf"
+        }
+        fields_gov = extract_structured_fields(doc_gov, "Government Certificate")
+        self.assertEqual(fields_gov["Applicant Name"]["value"], "Jane Doe")
+        self.assertNotEqual(fields_gov["Applicant Name"]["value"], "Name")
+
+        doc_date = {
+            "pages": [{"page_number": 1, "text": (
+                "CERTIFICATE OF COMPLETION\n"
+                "Jane Doe\n"
+                "has completed Python\n"
+                "Date of Issue\n"
+                "11th November 2025\n"
+                "Certificate code : 9380068"
+            )}],
+            "full_text": (
+                "CERTIFICATE OF COMPLETION\n"
+                "Jane Doe\n"
+                "has completed Python\n"
+                "Date of Issue\n"
+                "11th November 2025\n"
+                "Certificate code : 9380068"
+            ),
+            "filename": "cert.pdf"
+        }
+        fields_date = extract_structured_fields(doc_date, "Educational Certificate")
+        self.assertEqual(fields_date["Issue Date"]["value"], "11th November 2025")
+        self.assertNotEqual(fields_date["Issue Date"]["value"], "of Issue")
+
+    def test_code_with_brackets_trailing_punctuation_and_compound_delimiters(self):
+        """R1: Test identifier extraction with square bracket remarks, trailing punctuation, and compound delimiter lines."""
+        from information_extractor import extract_field_from_lines
+        from document_schema import get_schema
+
+        aliases = get_schema("Educational Certificate").alias_map["Certificate ID"]
+        cases = [
+            ("Certificate code : 9380068 [Please verify online]", "9380068"),
+            ("Certificate code : 9380068.", "9380068"),
+            ("Certificate code : 9380068;", "9380068"),
+            ("Certificate code : 9380068, Date: 11/11/2025", "9380068"),
+            ("Certificate code : 9380068 | Date: 11th November 2025", "9380068"),
+            ("Certificate code : 9380068 - Date of Issue: 11/11/2025", "9380068"),
+            ("Certificate code: 9380068 | Issued on 11/11/2025", "9380068"),
+        ]
+        for line, exp in cases:
+            res = extract_field_from_lines([line], aliases, "identifier")
+            self.assertIsNotNone(res, f"Failed on: {line}")
+            self.assertEqual(res[0], exp, f"Failed on line: {line}")
+
+    def test_certificate_id_with_underscore_and_dot_format_validation(self):
+        """R1: Test that Certificate IDs containing underscores and dots are recognized as valid formats."""
+        for code in ["CERT_9380068", "cert.9380068", "AWS-CERT-001_A", "UC-1234.5678"]:
+            fields = {"Certificate ID": {"value": code, "confidence": 90.0, "status": "PRESENT"}}
+            res = validate_document_schema(fields, "Educational Certificate")
+            stat = next((r["Status"] for r in res if r["Field"] == "Certificate ID"), None)
+            self.assertEqual(stat, "PRESENT", f"Certificate ID {code} failed format check with status {stat}")
+
+    def test_extended_completion_phrasing_patterns_and_verb_rejection(self):
+        """R1: Test extraction with extended completion phrasing (graduated, participated, recognition, completion of)."""
+        from information_extractor import extract_course_completion_name
+
+        cases = [
+            ("CERTIFICATE OF COMPLETION\nJane Doe\nhas successfully graduated from\nPython Bootcamp", "Jane Doe"),
+            ("CERTIFICATE OF PARTICIPATION\nJane Doe\nhas participated in\nPython Workshop", "Jane Doe"),
+            ("CERTIFICATE OF COMPLETION\nJane Doe\nfor completion of\nPython Course", "Jane Doe"),
+            ("CERTIFICATE OF COMPLETION\nJane Doe\nin recognition of successful completion of\nPython Course", "Jane Doe"),
+        ]
+        for text, exp in cases:
+            res = extract_course_completion_name(text)
+            self.assertIsNotNone(res, f"Failed extracting from: {text}")
+            self.assertEqual(res[0], exp)
+
+    def test_multiline_bulleted_identifier_extraction(self):
+        """R1: Test multi-line identifier extraction with bullet characters and trailing punctuation."""
+        from information_extractor import extract_field_from_lines
+        from document_schema import get_schema
+
+        aliases = get_schema("Educational Certificate").alias_map["Certificate ID"]
+        lines = ["Certificate code", "• 9380068."]
+        res = extract_field_from_lines(lines, aliases, "identifier")
+        self.assertIsNotNone(res)
+        self.assertEqual(res[0], "9380068")
+
+    def test_date_parsing_across_dash_slash_dot_and_abbreviated_month_formats(self):
+        """R1: Test date parsing and validation across dash, slash, dot, and abbreviated month formats."""
+        from document_schema import parse_date_robust, validate_document_schema
+        from information_extractor import DATE_REGEX, extract_field_from_lines
+        from document_schema import get_schema
+        from datetime import date
+
+        date_samples = [
+            ("01-Jan-2025", date(2025, 1, 1)),
+            ("11-Nov-2025", date(2025, 11, 11)),
+            ("11-November-2025", date(2025, 11, 11)),
+            ("01/Jan/2025", date(2025, 1, 1)),
+            ("01.Jan.2025", date(2025, 1, 1)),
+            ("Nov 11, 2025", date(2025, 11, 11)),
+            ("11-Nov-25", date(2025, 11, 11)),
+            ("15-Aug-2024", date(2024, 8, 15)),
+        ]
+        aliases = get_schema("Educational Certificate").alias_map["Issue Date"]
+
+        for date_str, expected_date in date_samples:
+            # 1. Regex recognition
+            match = DATE_REGEX.search(date_str)
+            self.assertIsNotNone(match, f"DATE_REGEX failed to match: {date_str}")
+
+            # 2. Robust calendar date parsing
+            parsed = parse_date_robust(date_str)
+            self.assertEqual(parsed, expected_date, f"parse_date_robust failed for: {date_str}")
+
+            # 3. Line extraction with alias
+            line = f"Date of Issue: {date_str}"
+            extracted = extract_field_from_lines([line], aliases, "date")
+            self.assertIsNotNone(extracted, f"extract_field_from_lines failed for: {line}")
+            self.assertEqual(extracted[0], date_str)
+
+            # 4. Schema validation produces VALID FORMAT (not MISSING)
+            fields = {"Issue Date": {"value": date_str, "confidence": 95.0, "status": "PRESENT"}}
+            res = validate_document_schema(fields, "Educational Certificate")
+            stat = next((r["Status"] for r in res if r["Field"] == "Issue Date"), None)
+            self.assertEqual(stat, "VALID FORMAT", f"Issue Date format check failed for: {date_str}")
+
+    def test_identifier_and_name_extraction_with_leading_and_trailing_quotes(self):
+        """R1: Test identifier and name extraction with single, double, and typographic quotes without false FORMAT WARNING."""
+        from information_extractor import extract_field_from_lines, clean_extracted_value, normalize_person_name
+        from document_schema import get_schema, validate_document_schema
+
+        aliases = get_schema("Educational Certificate").alias_map["Certificate ID"]
+        quote_cases = [
+            'Certificate code : "9380068"',
+            "Certificate code : '9380068'",
+            'Certificate code : “9380068”',
+            'Certificate code: "9380068."',
+        ]
+        for line in quote_cases:
+            res = extract_field_from_lines([line], aliases, "identifier")
+            self.assertIsNotNone(res, f"Failed extracting from: {line}")
+            self.assertEqual(res[0], "9380068", f"Failed stripping quotes from: {line}")
+
+            # Schema validation must not trigger FORMAT WARNING
+            fields = {"Certificate ID": {"value": res[0], "confidence": 90.0, "status": "PRESENT"}}
+            schema_res = validate_document_schema(fields, "Educational Certificate")
+            status = next((r["Status"] for r in schema_res if r["Field"] == "Certificate ID"), None)
+            self.assertEqual(status, "PRESENT")
+
+        # Also test name cleaning with quotes
+        self.assertEqual(normalize_person_name('"Shivam Patil"'), "Shivam Patil")
+        self.assertEqual(normalize_person_name("“Shivam Patil”"), "Shivam Patil")
+        self.assertEqual(clean_extracted_value("'9380068'"), "9380068")
+
+    def test_extended_learning_platform_certifier_recognition(self):
+        """R1: Test recognition of extended online learning platforms (DataCamp, Codecademy, Pluralsight, Kaggle, freeCodeCamp)."""
+        from information_extractor import extract_template_institution
+        from document_schema import is_course_completion_document
+
+        platforms = [
+            ("Certificate of Completion from DataCamp for Python", "DataCamp"),
+            ("Completed Course on Codecademy for Web Development", "Codecademy"),
+            ("Pluralsight Certificate of Achievement", "Pluralsight"),
+            ("freeCodeCamp verified certification in JavaScript", "freeCodeCamp"),
+            ("Kaggle Certificate of Completion", "Kaggle"),
+        ]
+        for text, expected in platforms:
+            res = extract_template_institution(text)
+            self.assertIsNotNone(res, f"Failed identifying platform from: {text}")
+            self.assertEqual(res[0], expected)
+            self.assertTrue(is_course_completion_document(raw_text=text))
+
+
 if __name__ == "__main__":
     unittest.main()

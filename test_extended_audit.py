@@ -191,6 +191,36 @@ class TestDocVerifyExtendedSuite(unittest.TestCase):
         self.assertEqual(outcome.final_status, STATUS_UNABLE_TO_VERIFY)
         self.assertTrue(outcome.requires_admin_review)
 
+    def test_participation_hybrid_certificate_extraction(self):
+        """Verify hybrid / scanned participation certificate extraction and validation."""
+        import os
+        from document_processor import process_file_bytes
+
+        cert_path = Path(__file__).parent / "data" / "certificate cyber security.pdf"
+        if not cert_path.is_file():
+            self.skipTest("Sample cyber security certificate not available in data folder.")
+
+        with open(cert_path, "rb") as f:
+            pdf_bytes = f.read()
+
+        processed = process_file_bytes(pdf_bytes, "certificate cyber security.pdf")
+        self.assertGreater(len(processed["full_text"]), 50)
+
+        for cat in ["Educational Certificate", "Government Certificate"]:
+            fields = extract_structured_fields(processed, cat)
+            name_val = fields.get("Student Name", {}).get("value") or fields.get("Applicant Name", {}).get("value")
+            self.assertIn("SHIVAM PATIL", str(name_val).upper())
+
+            inst_val = fields.get("Institution", {}).get("value") or fields.get("Issuing Authority", {}).get("value")
+            self.assertTrue(bool(inst_val and ("Lovely Professional" in inst_val or "ANSH" in inst_val or "India" in inst_val)))
+
+            date_val = fields.get("Issue Date", {}).get("value")
+            self.assertTrue(bool(date_val and "2025" in date_val))
+
+            schema = validate_document_schema(fields, cat, raw_text=processed["full_text"])
+            missing = [r["Field"] for r in schema if r["Status"] == "MISSING"]
+            self.assertEqual(missing, [], f"Unexpected missing fields in {cat}: {missing}")
+
 
 if __name__ == "__main__":
     unittest.main()

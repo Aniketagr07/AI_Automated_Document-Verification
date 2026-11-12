@@ -999,7 +999,7 @@ elif not is_admin and active_nav == "Upload Document":
                         extracted_fields = extract_structured_fields(processed, category)
 
                         # Step 2: Schema Validation
-                        schema_results = validate_document_schema(extracted_fields, category)
+                        schema_results = validate_document_schema(extracted_fields, category, raw_text=processed["full_text"])
 
                         # Step 3: ML Category Classification
                         ml_result = predict_document_category(processed["full_text"])

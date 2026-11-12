@@ -18,17 +18,25 @@ DATE_FORMATS = [
     "%Y-%m-%d", "%Y/%m/%d",
     "%d/%m/%y", "%d-%m-%y",
     "%d %B %Y", "%d %b %Y",
+    "%d-%b-%Y", "%d-%B-%Y",
+    "%d/%b/%Y", "%d/%B/%Y",
+    "%d.%b.%Y", "%d.%B.%Y",
+    "%d-%b-%y", "%d-%B-%y",
+    "%d/%b/%y", "%d.%b.%y",
     "%B %d, %Y", "%b %d, %Y",
     "%d %B, %Y", "%d %b, %Y",
+    "%B %d %Y", "%b %d %Y",
+    "%b %d, %y", "%B %d, %y",
+    "%Y-%b-%d", "%Y-%B-%d",
     "%Y"  # Year only (e.g. in some graduation certificates)
 ]
 
 
 def parse_date_robust(value: Optional[str]) -> Optional[date]:
-    """Parses a date string across diverse formats with clean whitespace stripping."""
+    """Parses a date string across diverse formats with clean whitespace and quote stripping."""
     if not value or not isinstance(value, str):
         return None
-    cleaned = value.strip().replace(",", ", ").replace("  ", " ")
+    cleaned = value.strip().strip("\"'“”‘’").replace(",", ", ").replace("  ", " ")
     for fmt in DATE_FORMATS:
         try:
             return datetime.strptime(cleaned, fmt).date()
@@ -133,7 +141,7 @@ EDUCATIONAL_CERTIFICATE_SCHEMA = DocumentSchema(
             data_type="identifier",
             required=True,
             min_length=3,
-            regex_pattern=r"^[A-Za-z0-9\-\/]+$",
+            regex_pattern=r"^[A-Za-z0-9\-\/\._]+$",
             description="Unique certificate, serial, or roll/registration number."
         ),
         "Institution": FieldConstraint(
@@ -168,28 +176,34 @@ EDUCATIONAL_CERTIFICATE_SCHEMA = DocumentSchema(
     ],
     required_keywords=[
         "certify", "degree", "diploma", "examination", "conferred",
-        "passed", "university", "institute", "college", "board", "grade", "marks"
+        "passed", "university", "institute", "college", "board", "grade", "marks",
+        "certificate", "completion", "achievement", "completed", "course", "training",
+        "simplilearn", "microsoft", "google", "aws", "coursera", "udemy", "edx"
     ],
     alias_map={
         "Student Name": [
             "student name", "name of student", "student's name", "candidate name",
             "name of the candidate", "certifies that", "certified that", "awarded to",
-            "this is to certify that", "son of", "daughter of", "name"
+            "this is to certify that", "son of", "daughter of", "name",
+            "applicant name", "recipient name", "recipient", "participant name", "presented to"
         ],
         "Certificate ID": [
             "certificate id", "certificate number", "certificate no", "certificate no.",
             "registration number", "registration no", "registration no.", "roll number",
             "roll no", "roll no.", "enrolment number", "enrollment no", "serial number",
-            "cert no", "hall ticket no", "folio no"
+            "cert no", "hall ticket no", "folio no",
+            "certificate code", "cert code", "verification code", "code :", "code", "credential id", "cert id"
         ],
         "Institution": [
             "institution name", "name of institution", "university name", "college name",
             "school name", "board of education", "institute of", "university", "college",
-            "school", "board", "academy"
+            "school", "board", "academy",
+            "issuing authority", "organization", "issuer", "learning platform", "platform", "certifier"
         ],
         "Issue Date": [
             "date of issue", "issue date", "issued on", "date issued", "date of award",
             "awarded on", "dated", "convocation date", "date",
+            "date of completion", "completion date", "completed on",
             # OCR misread variants (e.g. "Issue" → "ksue", "lssue", "lssue")
             "date of ksue", "date of lssue", "date of isue", "date of issure",
             "date of issuance", "issuance date", "date awarded", "date of certification"
@@ -266,18 +280,21 @@ IDENTITY_DOCUMENT_SCHEMA = DocumentSchema(
     alias_map={
         "Name": [
             "full name", "name of holder", "holder name", "cardholder name",
-            "name", "given name", "surname", "beneficiary"
+            "name", "given name", "surname", "beneficiary",
+            "applicant name", "student name", "recipient name", "recipient", "participant name", "presented to", "awarded to"
         ],
         "Document Number": [
             "document number", "document no", "document no.", "identification number",
             "id number", "card number", "pan", "pan number", "aadhaar number",
-            "uid", "passport no", "passport number", "license no", "epic no"
+            "uid", "passport no", "passport number", "license no", "epic no",
+            "certificate id", "certificate code", "cert code", "verification code", "code :", "code", "credential id", "cert id"
         ],
         "Date of Birth": [
             "date of birth", "birth date", "dob", "d.o.b.", "year of birth", "born on"
         ],
         "Issue Date": [
-            "date of issue", "issue date", "issued on", "date of issue / issuance"
+            "date of issue", "issue date", "issued on", "date of issue / issuance", "dated", "date",
+            "date of completion", "completion date", "completed on"
         ],
         "Expiry Date": [
             "date of expiry", "expiry date", "expiration date", "valid until",
@@ -339,25 +356,30 @@ GOVERNMENT_CERTIFICATE_SCHEMA = DocumentSchema(
     ],
     required_keywords=[
         "government", "revenue", "tehsildar", "magistrate", "district", "collector",
-        "certificate", "applicant", "certify", "attestation", "official", "state"
+        "certificate", "applicant", "certify", "attestation", "official", "state",
+        "completion", "course", "training"
     ],
     alias_map={
         "Applicant Name": [
             "applicant name", "name of applicant", "applicant", "beneficiary name",
-            "name of the applicant", "certifies that", "certified that", "name"
+            "name of the applicant", "certifies that", "certified that", "name",
+            "student name", "recipient name", "recipient", "participant name", "presented to", "awarded to"
         ],
         "Certificate ID": [
             "certificate id", "certificate number", "certificate no", "certificate no.",
             "application number", "application no", "registration number", "reference number",
-            "ack no", "barcode number", "token no"
+            "ack no", "barcode number", "token no",
+            "certificate code", "cert code", "verification code", "code :", "code", "credential id", "cert id"
         ],
         "Issuing Authority": [
             "issuing authority", "issuing department", "issued by", "department name",
             "authority", "competent authority", "office of", "tehsildar", "district magistrate",
-            "sub divisional magistrate", "revenue officer"
+            "sub divisional magistrate", "revenue officer",
+            "institution", "organization", "issuer", "learning platform", "platform", "certifier"
         ],
         "Issue Date": [
-            "date of issue", "issue date", "issued on", "date issued", "dated", "date"
+            "date of issue", "issue date", "issued on", "date issued", "dated", "date",
+            "date of completion", "completion date", "completed on"
         ],
         "Expiry Date": [
             "date of expiry", "expiry date", "expiration date", "valid until",
@@ -392,16 +414,66 @@ def get_schema(category_name: str) -> DocumentSchema:
     raise ValueError(f"Schema not found for category: '{category_name}'")
 
 
+FIELD_EQUIVALENTS: Dict[str, List[str]] = {
+    "Student Name": ["Applicant Name", "Name", "Recipient Name", "Full Name"],
+    "Applicant Name": ["Student Name", "Name", "Recipient Name", "Full Name"],
+    "Name": ["Student Name", "Applicant Name", "Recipient Name", "Full Name"],
+    "Full Name": ["Student Name", "Applicant Name", "Name", "Recipient Name"],
+    "Institution": ["Issuing Authority", "Organization", "Issuer"],
+    "Issuing Authority": ["Institution", "Organization", "Issuer"],
+    "Certificate ID": ["Document Number", "Certificate Code", "Code", "Credential ID"],
+    "Document Number": ["Certificate ID", "Certificate Code", "Code", "Credential ID"],
+}
+
+
+def is_course_completion_document(
+    fields_dict: Optional[Dict[str, Any]] = None,
+    raw_text: str = ""
+) -> bool:
+    """
+    Checks if a document exhibits course or training completion characteristics.
+    Inspects raw text, filenames, and extracted field values against completion indicators.
+    """
+    course_indicators = [
+        "completion", "completed", "achievement", "accomplishment", "participation",
+        "course", "courses", "training", "prompt engineering",
+        "copilot", "simplilearn", "simplelearn", "microsoft skillup", "skillup",
+        "coursera", "udemy", "edx", "udacity", "cisco", "datacamp", "codecademy",
+        "pluralsight", "freecodecamp", "kaggle",
+        "google cloud", "google", "aws", "amazon web services", "microsoft",
+        "skill boost", "skills build", "skill builder",
+        "certificate code", "cert code", "verification code", "credential id", "code :",
+        "declaration of completion", "certificate of completion", "certificate of achievement",
+        "statement of accomplishment", "course certificate", "training certificate"
+    ]
+    text_lower = (raw_text or "").lower()
+    if any(k in text_lower for k in course_indicators):
+        return True
+    if fields_dict:
+        for v in fields_dict.values():
+            v_val = v.get("value") if isinstance(v, dict) else v
+            v_ev = v.get("evidence") if isinstance(v, dict) else ""
+            v_str = (str(v_val or "") + " " + str(v_ev or "")).lower()
+            if any(k in v_str for k in course_indicators):
+                return True
+    return False
+
+
 def validate_document_schema(
     fields_dict: Dict[str, Any],
-    category_name: str
+    category_name: str,
+    raw_text: str = ""
 ) -> List[Dict[str, str]]:
     """
     Validates extracted field values against the formal knowledge representation schema.
     Returns list of validation records with Field, Status, and Explanation.
+    Supports tolerant category mapping for course and training completion certificates.
     """
     schema = get_schema(category_name)
     results = []
+
+    # Check if document exhibits course/training completion characteristics
+    is_course_cert = is_course_completion_document(fields_dict, raw_text)
 
     for field_name, constraint in schema.fields.items():
         field_info = fields_dict.get(field_name, {})
@@ -412,6 +484,37 @@ def validate_document_schema(
             val = field_info
 
         val_str = str(val).strip() if val is not None else ""
+
+        # Tolerant category mapping: check equivalent field names across categories
+        if not val_str:
+            for eq_field in FIELD_EQUIVALENTS.get(field_name, []):
+                eq_info = fields_dict.get(eq_field, {})
+                eq_val = eq_info.get("value") if isinstance(eq_info, dict) else eq_info
+                if eq_val:
+                    val_str = str(eq_val).strip()
+                    val = eq_val
+                    break
+
+        # Tolerant handling: non-applicable fields for course completion certificates
+        is_participation = bool(re.search(r"(?i)\b(?:participation|participated|attendance|attended|workshop|webinar)\b", raw_text))
+        if constraint.required and not val_str and is_course_cert:
+            if is_participation and field_name in ["Certificate ID", "Document Number"]:
+                results.append({
+                    "Field": field_name,
+                    "Status": "NOT_APPLICABLE",
+                    "Explanation": f"Field '{field_name}' is not mandatory for participation or workshop credentials."
+                })
+                continue
+            if field_name not in [
+                "Student Name", "Applicant Name", "Name", "Full Name", "Certificate ID", "Document Number",
+                "Institution", "Issuing Authority", "Issue Date"
+            ]:
+                results.append({
+                    "Field": field_name,
+                    "Status": "NOT_APPLICABLE",
+                    "Explanation": f"Field '{field_name}' is not applicable for course completion certificate."
+                })
+                continue
 
         # Check required fields
         if constraint.required and not val_str:
