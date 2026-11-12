@@ -429,11 +429,12 @@ def compute_dual_axis_uncertainty_matrix(
     text_len = len(raw_text.strip()) if raw_text else 0
     text_factor = min(100.0, (text_len / 250.0) * 100.0)
 
-    # Check non-empty extracted fields
+    # Check non-empty or properly accounted extracted fields
     if extracted_fields:
         extracted_count = sum(
             1 for v in extracted_fields.values()
             if (v.get("value") if isinstance(v, dict) else v) is not None
+            or (isinstance(v, dict) and v.get("status") == "NOT_APPLICABLE")
         )
         field_factor = (extracted_count / len(extracted_fields)) * 100.0
     else:

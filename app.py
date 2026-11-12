@@ -1129,13 +1129,19 @@ elif not is_admin and active_nav == "Upload Document":
             field_display = []
             for f_name, f_val in lp["fields"].items():
                 if isinstance(f_val, dict):
-                    v = f_val.get("corrected_value") or f_val.get("value") or "[Missing]"
+                    if f_val.get("status") == "NOT_APPLICABLE":
+                        v = "[Not Applicable]"
+                        stat = "Not Applicable"
+                    else:
+                        v = f_val.get("corrected_value") or f_val.get("value") or "[Missing]"
+                        stat = "Detected" if v != "[Missing]" else "Missing"
                 else:
                     v = str(f_val) if f_val else "[Missing]"
+                    stat = "Detected" if v != "[Missing]" else "Missing"
                 field_display.append({
                     "Field": f_name,
                     "Extracted Value": v,
-                    "Extraction Status": "Detected" if v != "[Missing]" else "Missing"
+                    "Extraction Status": stat
                 })
             st.dataframe(pd.DataFrame(field_display), use_container_width=True, hide_index=True)
 

@@ -102,6 +102,9 @@ BAD_NAME_WORDS = [
     "graduated", "graduate", "graduation", "participated", "participation",
     "attended", "attendance", "successfully", "completed", "completing",
     "passing", "passed", "requirements", "finished", "recognition",
+    "workshop", "webinar", "seminar", "symposium", "conference", "hackathon",
+    "cybersecurity", "cyber", "security", "ethical", "session", "module",
+    "vaultofcodes", "anshtech", "infotech", "tutorial",
 ]
 BAD_NAME_WORD_REGEX = re.compile(r"\b(?:" + "|".join(re.escape(k) for k in BAD_NAME_WORDS) + r")\b", re.IGNORECASE)
 
@@ -144,6 +147,24 @@ def clean_extracted_value(val: str) -> str:
     cleaned = re.sub(r"^[\s:\-–—|=•\.,;\"'“”‘’]+", "", val)
     cleaned = re.sub(r"[\s:\-–—|=•\.,;\"'“”‘’]+$", "", cleaned)
     return cleaned.strip()
+
+
+def is_valid_person_candidate(cand: str) -> bool:
+    """Validates whether a candidate string conforms to a genuine human personal name."""
+    if not cand or len(cand) < 2 or len(cand) > 60:
+        return False
+    if any(ch.isdigit() for ch in cand):
+        return False
+    if any(ch in cand for ch in ["&", "+", "=", "@", "$", "%", "*", "/", "\\", "|", "<", ">", "_"]):
+        return False
+    if BAD_NAME_WORD_REGEX.search(cand):
+        return False
+    words = cand.split()
+    if not (1 <= len(words) <= 5):
+        return False
+    if not all(re.match(r"^[A-Za-z][A-Za-z\.\'-]*$", w) for w in words):
+        return False
+    return True
 
 
 def normalize_person_name(name: str) -> str:
@@ -203,6 +224,10 @@ def extract_field_from_lines(
     Handles optional whitespace before colons (e.g. "Certificate code : 9380068").
     """
     sorted_aliases = sorted(aliases, key=len, reverse=True)
+    is_name_field = (data_type == "string") and any(
+        n in a.lower() for a in aliases
+        for n in ["student name", "applicant name", "recipient name", "candidate name", "participant name", "holder name", "full name", "this is to certify that", "certifies that", "certified that", "presented to", "awarded to"]
+    )
 
     stop_phrases = [
         r"\s+has\s+completed\b",
@@ -255,11 +280,15 @@ def extract_field_from_lines(
                 if candidate and len(candidate) >= 2:
                     if candidate.lower().strip() in LABEL_WORDS:
                         continue
+                    if is_name_field and not is_valid_person_candidate(candidate):
+                        continue
                     if data_type == "identifier":
                         candidate = re.sub(r"\s*(?:\([^)]*\)|\[[^\]]*\])", "", candidate).strip()
                         candidate = re.split(r"\s*[\|,;]\s*", candidate)[0].strip()
                         candidate = re.split(r"\s+[-–—]\s+(?:date|dated|issue|issued|valid|status)\b", candidate, flags=re.IGNORECASE)[0].strip()
                         candidate = clean_extracted_value(candidate)
+                        if parse_date_robust(candidate) or re.match(r"^\d{1,2}[/-]\d{4}$", candidate):
+                            continue
                     if data_type == "date":
                         if not parse_date_robust(candidate):
                             continue
@@ -287,11 +316,15 @@ def extract_field_from_lines(
                             val_to_use = clean_extracted_value(next_line)
                             if val_to_use.lower().strip() in LABEL_WORDS:
                                 continue
+                            if is_name_field and not is_valid_person_candidate(val_to_use):
+                                continue
                             if data_type == "identifier":
                                 val_to_use = re.sub(r"\s*(?:\([^)]*\)|\[[^\]]*\])", "", val_to_use).strip()
                                 val_to_use = re.split(r"\s*[\|,;]\s*", val_to_use)[0].strip()
                                 val_to_use = re.split(r"\s+[-–—]\s+(?:date|dated|issue|issued|valid|status)\b", val_to_use, flags=re.IGNORECASE)[0].strip()
                                 val_to_use = clean_extracted_value(val_to_use)
+                                if parse_date_robust(val_to_use) or re.match(r"^\d{1,2}[/-]\d{4}$", val_to_use):
+                                    continue
                             if data_type == "date":
                                 if not parse_date_robust(val_to_use):
                                     continue
@@ -316,10 +349,14 @@ def extract_field_from_lines(
                 if prev_line and len(prev_line) >= 2 and not HEADER_OR_TRIGGER_REGEX.match(prev_line):
                     if prev_line.lower().strip() in LABEL_WORDS:
                         continue
+                    if is_name_field and not is_valid_person_candidate(prev_line):
+                        continue
                     if data_type == "identifier":
                         prev_line = re.sub(r"\s*(?:\([^)]*\)|\[[^\]]*\])", "", prev_line).strip()
                         prev_line = re.split(r"\s*[\|,;]\s*", prev_line)[0].strip()
                         prev_line = clean_extracted_value(prev_line)
+                        if parse_date_robust(prev_line) or re.match(r"^\d{1,2}[/-]\d{4}$", prev_line):
+                            continue
                     if data_type == "date" and not parse_date_robust(prev_line):
                         continue
                     evidence = f"{prev_line} <- ({alias_clean})"
@@ -501,7 +538,7 @@ def extract_course_completion_name(text: str) -> Optional[Tuple[str, str, float]
     )
     cert_indicators = re.compile(r"(?i)\b(?:certificate\s+code|cert\s+code|verification\s+code|code\s*:|credential\s+id)\b")
 
-    for i in range(min(3, len(lines))):
+    for i in range(min(5, len(lines))):
         line = lines[i]
         if (
             HEADER_OR_TRIGGER_REGEX.match(line)
@@ -509,6 +546,7 @@ def extract_course_completion_name(text: str) -> Optional[Tuple[str, str, float]
             or intermediate_triggers.match(line)
             or course_indicators.search(line)
             or cert_indicators.search(line)
+            or DATE_REGEX.search(line)
         ):
             continue
         candidate = normalize_person_name(line)
@@ -527,9 +565,14 @@ def extract_course_completion_name(text: str) -> Optional[Tuple[str, str, float]
                     or bool(DATE_REGEX.search(next_line))
                     or bool(cert_indicators.search(next_line))
                 )
-            if has_succeeding_course or (next_is_course_or_date and bool(cert_indicators.search(text_norm))):
+            has_cert_context = (
+                bool(cert_indicators.search(text_norm))
+                or bool(re.search(r"(?i)\b(?:certificate|completion|participation|workshop|training|course|achievement|declaration)\b", text_norm))
+                or is_course_completion_document(raw_text=text_norm)
+            )
+            if has_succeeding_course or (next_is_course_or_date and has_cert_context) or has_cert_context:
                 evidence = f"Recipient Name: {candidate}"
-                return candidate, evidence, 92.0
+                return candidate, evidence, 94.0
 
     return None
 
@@ -712,17 +755,18 @@ def extract_structured_fields(
             elif field_name in ["Certificate ID", "Document Number"]:
                 # Check for standalone ID patterns in full text
                 for id_pat in ID_PATTERNS:
-                    m = id_pat.search(full_text)
-                    if m:
+                    for m in id_pat.finditer(full_text):
                         raw_id = m.group(1).strip() if m.lastindex else m.group(0).strip()
                         cand_id = clean_extracted_value(raw_id)
-                        # Ensure candidate is not a date or date fragment (e.g. 11/2025 from 21/11/2025)
+                        # Ensure candidate is not a date or date fragment (e.g. 12/2025 from 06/12/2025)
                         if parse_date_robust(cand_id) or re.search(r"\b\d{1,2}[/-]" + re.escape(cand_id), full_text) or re.match(r"^\d{1,2}[/-]\d{4}$", cand_id):
                             continue
                         found_val = cand_id
                         found_evidence = f"Pattern match: {m.group(0).strip()}"
                         found_conf = 88.0
                         found_page = 1
+                        break
+                    if found_val:
                         break
 
             elif constraint.data_type == "date":
@@ -813,14 +857,20 @@ def extract_structured_fields(
                     break
 
     # Pass 4: Tolerant non-applicable alignment for course/training completion documents
+    is_participation = bool(re.search(r"(?i)\b(?:participation|participated|attendance|attended|workshop|webinar)\b", full_text))
     if is_course_completion_document(extracted_records, full_text):
         for field_name, record in extracted_records.items():
-            if record.get("status") == "MISSING" and field_name not in [
-                "Student Name", "Applicant Name", "Name", "Full Name", "Certificate ID", "Document Number",
-                "Institution", "Issuing Authority", "Issue Date"
-            ]:
-                record["status"] = "NOT_APPLICABLE"
-                record["manual_verification_required"] = False
-                record["evidence"] = f"Field '{field_name}' is not applicable for course completion certificate."
+            if record.get("status") == "MISSING":
+                if is_participation and field_name in ["Certificate ID", "Document Number"]:
+                    record["status"] = "NOT_APPLICABLE"
+                    record["manual_verification_required"] = False
+                    record["evidence"] = f"Field '{field_name}' is not mandatory for participation or workshop credentials."
+                elif field_name not in [
+                    "Student Name", "Applicant Name", "Name", "Full Name", "Certificate ID", "Document Number",
+                    "Institution", "Issuing Authority", "Issue Date"
+                ]:
+                    record["status"] = "NOT_APPLICABLE"
+                    record["manual_verification_required"] = False
+                    record["evidence"] = f"Field '{field_name}' is not applicable for course completion certificate."
 
     return extracted_records

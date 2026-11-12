@@ -363,6 +363,7 @@ GOVERNMENT_CERTIFICATE_SCHEMA = DocumentSchema(
         "Applicant Name": [
             "applicant name", "name of applicant", "applicant", "beneficiary name",
             "name of the applicant", "certifies that", "certified that", "name",
+            "this is to certify that", "certify that",
             "student name", "recipient name", "recipient", "participant name", "presented to", "awarded to"
         ],
         "Certificate ID": [
@@ -375,7 +376,8 @@ GOVERNMENT_CERTIFICATE_SCHEMA = DocumentSchema(
             "issuing authority", "issuing department", "issued by", "department name",
             "authority", "competent authority", "office of", "tehsildar", "district magistrate",
             "sub divisional magistrate", "revenue officer",
-            "institution", "organization", "issuer", "learning platform", "platform", "certifier"
+            "institution", "organization", "issuer", "learning platform", "platform", "certifier",
+            "conducted by", "organized by", "conducted", "organized"
         ],
         "Issue Date": [
             "date of issue", "issue date", "issued on", "date issued", "dated", "date",
