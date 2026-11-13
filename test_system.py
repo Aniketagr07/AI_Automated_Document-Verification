@@ -675,6 +675,54 @@ class TestCourseCompletionCertificateVerification(unittest.TestCase):
             self.assertNotIn("Mandatory field 'Certificate ID' could not be identified", reason)
             self.assertNotIn("Mandatory field 'Issuing Authority' could not be identified", reason)
 
+    def test_infosys_springboard_completion_certificate_extraction(self):
+        """
+        Verify that Course Completion Certificates without printed Certificate ID
+        (such as Infosys Springboard) do not extract QR verify URL as ID,
+        correctly identify Infosys Springboard as Institution, and treat missing ID as NOT_APPLICABLE.
+        """
+        infosys_text = (
+            "Aniket Agarwal\n"
+            "Introduction to Artificial Intelligence\n"
+            "The certificate is awarded to\n"
+            "for successfully completing the course\n"
+            "on March 23, 2026\n"
+            "Issued on: Monday, March 23, 2026\n"
+            "To verify, scan the QR code at https://verify.onwingspan.com\n"
+        )
+        doc = {
+            "filename": "9e7941ff-751a-46d9-848b-20e7fbd970e2.pdf",
+            "full_text": infosys_text,
+            "page_count": 1,
+            "average_ocr_confidence": 92.8,
+            "pages": [{"page_number": 1, "text": infosys_text, "confidence": 92.8}]
+        }
+        fields = extract_structured_fields(doc, "Educational Certificate")
+
+        # 1. Recipient Name extraction
+        self.assertEqual(fields["Student Name"]["value"], "Aniket Agarwal")
+        self.assertFalse(fields["Student Name"]["manual_verification_required"])
+
+        # 2. Certificate ID must NOT be the URL
+        self.assertNotEqual(fields["Certificate ID"]["value"], "at https://verify.onwingspan.com")
+        self.assertNotIn("https://", str(fields["Certificate ID"]["value"]))
+        self.assertEqual(fields["Certificate ID"]["status"], "NOT_APPLICABLE")
+
+        # 3. Institution identified from verification domain / platform
+        self.assertEqual(fields["Institution"]["value"], "Infosys Springboard")
+        self.assertEqual(fields["Institution"]["status"], "PRESENT")
+
+        # 4. Issue Date extracted
+        self.assertEqual(fields["Issue Date"]["value"], "March 23, 2026")
+
+        # 5. Schema Validation has no missing mandatory fields
+        schema_results = validate_document_schema(fields, "Educational Certificate", raw_text=infosys_text)
+        statuses = {r["Field"]: r["Status"] for r in schema_results}
+        self.assertEqual(statuses.get("Student Name"), "PRESENT")
+        self.assertEqual(statuses.get("Institution"), "PRESENT")
+        self.assertEqual(statuses.get("Certificate ID"), "NOT_APPLICABLE")
+        self.assertEqual(statuses.get("Issue Date"), "VALID FORMAT")
+
     def test_completion_header_phrasing_layout_patterns(self):
         """R1: Test extraction where name appears between completion headers and completion phrasing."""
         from information_extractor import extract_course_completion_name

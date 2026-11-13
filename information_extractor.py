@@ -119,6 +119,18 @@ LABEL_WORDS = {
 
 # Online learning platforms and certifiers keyword definitions
 ONLINE_LEARNING_PLATFORMS = [
+    (re.compile(r"(?i)\b(?:infosys\s*springboard)\b"), "Infosys Springboard"),
+    (re.compile(r"(?i)\b(?:infosys\s*limited)\b"), "Infosys Limited"),
+    (re.compile(r"(?i)\b(?:infosys)\b"), "Infosys"),
+    (re.compile(r"(?i)\b(?:onwingspan(?:\.com)?|wingspan)\b"), "Infosys Springboard"),
+    (re.compile(r"(?i)\b(?:tcs\s*i?on|tata\s*consultancy\s*services)\b"), "TCS iON"),
+    (re.compile(r"(?i)\b(?:wipro)\b"), "Wipro"),
+    (re.compile(r"(?i)\b(?:cognizant)\b"), "Cognizant"),
+    (re.compile(r"(?i)\b(?:accenture)\b"), "Accenture"),
+    (re.compile(r"(?i)\b(?:hcl\s*tech(?:nologies)?)\b"), "HCLTech"),
+    (re.compile(r"(?i)\b(?:ibm\s*skillsbuild)\b"), "IBM SkillsBuild"),
+    (re.compile(r"(?i)\b(?:nptel)\b"), "NPTEL"),
+    (re.compile(r"(?i)\b(?:swayam)\b"), "SWAYAM"),
     (re.compile(r"(?i)\b(?:microsoft\s*skillup)\b"), "Microsoft SkillUp"),
     (re.compile(r"(?i)\b(?:simplilearn|simplelearn)\b"), "Simplilearn"),
     (re.compile(r"(?i)\b(?:microsoft)\b"), "Microsoft"),
@@ -138,6 +150,11 @@ ONLINE_LEARNING_PLATFORMS = [
     (re.compile(r"(?i)\b(?:ibm)\b"), "IBM"),
     (re.compile(r"(?i)\b(?:linkedin\s*learning)\b"), "LinkedIn Learning"),
     (re.compile(r"(?i)\b(?:oracle)\b"), "Oracle"),
+    (re.compile(r"(?i)\b(?:hackerrank)\b"), "HackerRank"),
+    (re.compile(r"(?i)\b(?:leetcode)\b"), "LeetCode"),
+    (re.compile(r"(?i)\b(?:geeksforgeeks|gfg)\b"), "GeeksforGeeks"),
+    (re.compile(r"(?i)\b(?:great\s*learning)\b"), "Great Learning"),
+    (re.compile(r"(?i)\b(?:upgrad)\b"), "upGrad"),
 ]
 
 
@@ -268,6 +285,13 @@ def extract_field_from_lines(
             if is_broad_noun and not has_sep:
                 continue
 
+            # Skip loose 'code' alias if it is part of "qr code", "bar code", "pin code", etc. or lacks separator
+            if alias_clean.lower() == "code":
+                if not has_sep:
+                    continue
+                if re.search(r"(?i)\b(?:qr|bar|barcode|pin|postal|zip|source|area)\s+code\b", line_clean):
+                    continue
+
             # Handles alias followed by optional whitespace, optional colon/dash, whitespace, and value
             pattern = r"(?i)\b" + re.escape(alias_clean) + r"\b\s*(?::|=|-|–|—)?\s*(.+)"
             match = re.search(pattern, line_clean)
@@ -287,7 +311,17 @@ def extract_field_from_lines(
                         candidate = re.split(r"\s*[\|,;]\s*", candidate)[0].strip()
                         candidate = re.split(r"\s+[-–—]\s+(?:date|dated|issue|issued|valid|status)\b", candidate, flags=re.IGNORECASE)[0].strip()
                         candidate = clean_extracted_value(candidate)
+                        # Reject candidates containing URLs, web domains, or QR verification links
+                        if re.search(r"(?i)https?://|www\.|\b\w+\.(?:com|org|net|gov|edu|io|in|co|ai)\b", candidate):
+                            continue
+                        # Reject candidates starting with directional/prepositional prose
+                        if re.match(r"(?i)^(?:at|on|in|to|for|by|from|via|scan|visit|click|check|see|go\s+to|the)\b", candidate):
+                            continue
+                        if len(candidate.split()) > 3:
+                            continue
                         if parse_date_robust(candidate) or re.match(r"^\d{1,2}[/-]\d{4}$", candidate):
+                            continue
+                        if not re.match(r"^[A-Za-z0-9][A-Za-z0-9\-\/\._#]{1,40}$", candidate):
                             continue
                     if data_type == "date":
                         if not parse_date_robust(candidate):
@@ -323,7 +357,15 @@ def extract_field_from_lines(
                                 val_to_use = re.split(r"\s*[\|,;]\s*", val_to_use)[0].strip()
                                 val_to_use = re.split(r"\s+[-–—]\s+(?:date|dated|issue|issued|valid|status)\b", val_to_use, flags=re.IGNORECASE)[0].strip()
                                 val_to_use = clean_extracted_value(val_to_use)
+                                if re.search(r"(?i)https?://|www\.|\b\w+\.(?:com|org|net|gov|edu|io|in|co|ai)\b", val_to_use):
+                                    continue
+                                if re.match(r"(?i)^(?:at|on|in|to|for|by|from|via|scan|visit|click|check|see|go\s+to|the)\b", val_to_use):
+                                    continue
+                                if len(val_to_use.split()) > 3:
+                                    continue
                                 if parse_date_robust(val_to_use) or re.match(r"^\d{1,2}[/-]\d{4}$", val_to_use):
+                                    continue
+                                if not re.match(r"^[A-Za-z0-9][A-Za-z0-9\-\/\._#]{1,40}$", val_to_use):
                                     continue
                             if data_type == "date":
                                 if not parse_date_robust(val_to_use):
@@ -663,6 +705,7 @@ def extract_template_institution(text: str, filename: str = "") -> Optional[Tupl
     # Strategy 1: Academic / university patterns in document text (spaces only, no newlines across words)
     inst_keywords = [
         r"\b([A-Z][A-Za-z]+(?:[ \t]+[A-Z][A-Za-z]+){0,4}[ \t]+(?:University|Institute(?:[ \t]+of[ \t]+[A-Za-z]+)?|College|Academy|Board))\b",
+        r"\b([A-Z][A-Za-z0-9]+(?:[ \t]+[A-Z][A-Za-z0-9]+){0,3}[ \t]+(?:Limited|Ltd|Pvt[ \t]+Ltd|Private[ \t]+Limited|Corporation|Foundation|Academy))\b",
         r"(?i)\b(?:conducted\s+by|organized\s+by)\s+([A-Z][A-Za-z0-9]+(?:[ \t]+[A-Z][A-Za-z0-9]+){0,3})",
         r"(?i)\b(Government\s+of\s+India|Skill\s+India)\b",
         r"(?i)\b([A-Za-z][A-Za-z \t\.\'-]+(?:University|Institute\s+of\s+Technology|College\s+of\s+Engineering|Polytechnic|Academy|Board\s+of\s+Education))\b",
@@ -677,7 +720,7 @@ def extract_template_institution(text: str, filename: str = "") -> Optional[Tupl
             if 3 < len(candidate) < 80:
                 return candidate, match.group(0).strip(), 88.0
 
-    # Strategy 2: Online learning platforms and certifiers in document text
+    # Strategy 2: Online learning platforms, corporate certifiers, and verification portals in text
     for pat, name in ONLINE_LEARNING_PLATFORMS:
         m = pat.search(text_norm)
         if m:
@@ -758,8 +801,15 @@ def extract_structured_fields(
                     for m in id_pat.finditer(full_text):
                         raw_id = m.group(1).strip() if m.lastindex else m.group(0).strip()
                         cand_id = clean_extracted_value(raw_id)
+                        # Reject candidates containing URLs, domains, or direction words
+                        if re.search(r"(?i)https?://|www\.|\b\w+\.(?:com|org|net|gov|edu|io|in|co|ai)\b", cand_id):
+                            continue
+                        if re.match(r"(?i)^(?:at|on|in|to|for|by|from|via|scan|visit|click|check|see|go\s+to|the)\b", cand_id):
+                            continue
                         # Ensure candidate is not a date or date fragment (e.g. 12/2025 from 06/12/2025)
                         if parse_date_robust(cand_id) or re.search(r"\b\d{1,2}[/-]" + re.escape(cand_id), full_text) or re.match(r"^\d{1,2}[/-]\d{4}$", cand_id):
+                            continue
+                        if not re.match(r"^[A-Za-z0-9][A-Za-z0-9\-\/\._#]{1,40}$", cand_id):
                             continue
                         found_val = cand_id
                         found_evidence = f"Pattern match: {m.group(0).strip()}"
@@ -861,15 +911,17 @@ def extract_structured_fields(
     if is_course_completion_document(extracted_records, full_text):
         for field_name, record in extracted_records.items():
             if record.get("status") == "MISSING":
-                if is_participation and field_name in ["Certificate ID", "Document Number"]:
+                if field_name in ["Certificate ID", "Document Number"]:
                     record["status"] = "NOT_APPLICABLE"
+                    record["value"] = "[Not Applicable]"
                     record["manual_verification_required"] = False
-                    record["evidence"] = f"Field '{field_name}' is not mandatory for participation or workshop credentials."
+                    record["evidence"] = f"Field '{field_name}' is not mandatory for course completion or participation credentials."
                 elif field_name not in [
-                    "Student Name", "Applicant Name", "Name", "Full Name", "Certificate ID", "Document Number",
+                    "Student Name", "Applicant Name", "Name", "Full Name",
                     "Institution", "Issuing Authority", "Issue Date"
                 ]:
                     record["status"] = "NOT_APPLICABLE"
+                    record["value"] = "[Not Applicable]"
                     record["manual_verification_required"] = False
                     record["evidence"] = f"Field '{field_name}' is not applicable for course completion certificate."
 

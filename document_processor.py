@@ -233,10 +233,10 @@ def process_file_bytes(
                 # 2. Check native digital text
                 digital_text = unicodedata.normalize("NFKC", page.get_text().strip())
 
-                # Only treat as purely native digital if it has rich comprehensive content
-                # (not just an isolated student name overlay over a scanned background image)
+                # Only treat as purely native digital if it has rich comprehensive content (50+ words)
+                # Shorter digital overlays often leave header logos, institutions, and signatures on background images
                 digital_words = [w for w in digital_text.split() if re.search(r'[A-Za-z0-9]{2,}', w)]
-                has_comprehensive_digital = (len(digital_words) >= 20 and "(cid:" not in digital_text)
+                has_comprehensive_digital = (len(digital_words) >= 50 and "(cid:" not in digital_text)
 
                 if has_comprehensive_digital:
                     # Native digital PDF text is pristine and comprehensive
@@ -249,11 +249,15 @@ def process_file_bytes(
 
                     if digital_text and ocr_text:
                         # Hybrid page: digital vector text overlaid on a template background image
-                        # Ensure the digital text is merged with OCR background text
-                        if digital_text.lower() in ocr_text.lower():
-                            page_text = ocr_text
-                        else:
-                            page_text = f"{digital_text}\n\n{ocr_text}"
+                        # Merge digital text and background OCR text cleanly
+                        seen = set()
+                        merged_lines = []
+                        for l in (digital_text + "\n" + ocr_text).splitlines():
+                            cl = l.strip().lower()
+                            if cl and cl not in seen:
+                                seen.add(cl)
+                                merged_lines.append(l.strip())
+                        page_text = "\n".join(merged_lines)
                         page_conf = max(ocr_conf, 92.0)
                         extraction_method = "HYBRID_DIGITAL_OCR"
                     elif ocr_text:

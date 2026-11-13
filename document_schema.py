@@ -192,7 +192,7 @@ EDUCATIONAL_CERTIFICATE_SCHEMA = DocumentSchema(
             "registration number", "registration no", "registration no.", "roll number",
             "roll no", "roll no.", "enrolment number", "enrollment no", "serial number",
             "cert no", "hall ticket no", "folio no",
-            "certificate code", "cert code", "verification code", "code :", "code", "credential id", "cert id"
+            "certificate code", "cert code", "verification code", "code :", "credential id", "cert id"
         ],
         "Institution": [
             "institution name", "name of institution", "university name", "college name",
@@ -287,7 +287,7 @@ IDENTITY_DOCUMENT_SCHEMA = DocumentSchema(
             "document number", "document no", "document no.", "identification number",
             "id number", "card number", "pan", "pan number", "aadhaar number",
             "uid", "passport no", "passport number", "license no", "epic no",
-            "certificate id", "certificate code", "cert code", "verification code", "code :", "code", "credential id", "cert id"
+            "certificate id", "certificate code", "cert code", "verification code", "code :", "credential id", "cert id"
         ],
         "Date of Birth": [
             "date of birth", "birth date", "dob", "d.o.b.", "year of birth", "born on"
@@ -370,7 +370,7 @@ GOVERNMENT_CERTIFICATE_SCHEMA = DocumentSchema(
             "certificate id", "certificate number", "certificate no", "certificate no.",
             "application number", "application no", "registration number", "reference number",
             "ack no", "barcode number", "token no",
-            "certificate code", "cert code", "verification code", "code :", "code", "credential id", "cert id"
+            "certificate code", "cert code", "verification code", "code :", "credential id", "cert id"
         ],
         "Issuing Authority": [
             "issuing authority", "issuing department", "issued by", "department name",
@@ -443,6 +443,7 @@ def is_course_completion_document(
         "coursera", "udemy", "edx", "udacity", "cisco", "datacamp", "codecademy",
         "pluralsight", "freecodecamp", "kaggle",
         "google cloud", "google", "aws", "amazon web services", "microsoft",
+        "infosys", "springboard", "wingspan", "onwingspan", "tcs", "nptel", "swayam",
         "skill boost", "skills build", "skill builder",
         "certificate code", "cert code", "verification code", "credential id", "code :",
         "declaration of completion", "certificate of completion", "certificate of achievement",
@@ -479,13 +480,22 @@ def validate_document_schema(
 
     for field_name, constraint in schema.fields.items():
         field_info = fields_dict.get(field_name, {})
-        # Support both raw string or metadata dict from extractor
+        field_status = None
         if isinstance(field_info, dict):
             val = field_info.get("value")
+            field_status = field_info.get("status")
         else:
             val = field_info
 
         val_str = str(val).strip() if val is not None else ""
+
+        if field_status == "NOT_APPLICABLE" or val_str in ["[Not Applicable]", "None"]:
+            results.append({
+                "Field": field_name,
+                "Status": "NOT_APPLICABLE",
+                "Explanation": f"Field '{field_name}' is not applicable or not mandatory for this credential."
+            })
+            continue
 
         # Tolerant category mapping: check equivalent field names across categories
         if not val_str:
@@ -500,15 +510,15 @@ def validate_document_schema(
         # Tolerant handling: non-applicable fields for course completion certificates
         is_participation = bool(re.search(r"(?i)\b(?:participation|participated|attendance|attended|workshop|webinar)\b", raw_text))
         if constraint.required and not val_str and is_course_cert:
-            if is_participation and field_name in ["Certificate ID", "Document Number"]:
+            if field_name in ["Certificate ID", "Document Number"]:
                 results.append({
                     "Field": field_name,
                     "Status": "NOT_APPLICABLE",
-                    "Explanation": f"Field '{field_name}' is not mandatory for participation or workshop credentials."
+                    "Explanation": f"Field '{field_name}' is not mandatory for course completion or participation credentials."
                 })
                 continue
             if field_name not in [
-                "Student Name", "Applicant Name", "Name", "Full Name", "Certificate ID", "Document Number",
+                "Student Name", "Applicant Name", "Name", "Full Name",
                 "Institution", "Issuing Authority", "Issue Date"
             ]:
                 results.append({

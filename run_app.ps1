@@ -69,12 +69,22 @@ if ($conn) {
     } catch {}
 }
 
+# Detect Python executable with Streamlit
+$PythonExe = "python"
+$hasStreamlit = & $PythonExe -c "import streamlit" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    $fallbackPy = "$env:LOCALAPPDATA\Programs\Python\Python311\python.exe"
+    if (Test-Path $fallbackPy) {
+        $PythonExe = $fallbackPy
+    }
+}
+
 if ($Headless) {
-    Write-Host "[+] Launching Streamlit in background on port $Port..." -ForegroundColor Green
-    Start-Process -FilePath "python" -ArgumentList "-m streamlit run app.py --server.headless true --server.port $Port" -WindowStyle Hidden
+    Write-Host "[+] Launching Streamlit in background on port $Port using $PythonExe..." -ForegroundColor Green
+    Start-Process -FilePath $PythonExe -ArgumentList "-m streamlit run app.py --server.headless true --server.port $Port" -WindowStyle Hidden
     Start-Sleep -Seconds 3
     & $PSCommandPath -CheckHealth -Port $Port
 } else {
-    Write-Host "[+] Launching Streamlit in interactive mode on port $Port..." -ForegroundColor Green
-    python -m streamlit run app.py --server.port $Port
+    Write-Host "[+] Launching Streamlit in interactive mode on port $Port using $PythonExe..." -ForegroundColor Green
+    & $PythonExe -m streamlit run app.py --server.port $Port
 }
